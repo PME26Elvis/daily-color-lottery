@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "event": "source_added",
+    "path": "sources/coffee-shop-outdoor.png",
+    "run_id": "2026-05-14T15-00-37Z",
+    "time": "2026-05-14T15:00:37.481064+00:00"
+  },
+  {
+    "event": "source_added",
+    "path": "sources/kb-hi75c-wob-1.jpg",
+    "run_id": "2026-05-14T15-00-37Z",
+    "time": "2026-05-14T15:00:37.481064+00:00"
+  },
+  {
+    "event": "source_added",
+    "path": "sources/kb-hi75c-wob-2.jpg",
+    "run_id": "2026-05-14T15-00-37Z",
+    "time": "2026-05-14T15:00:37.481064+00:00"
+  }
+]
