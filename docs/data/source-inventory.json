@@ -3,8 +3,8 @@
     "path": "sources/coffee-shop-outdoor.png",
     "sha256": "e794844cab5d7eee5418404c14ab8d5bc4f163ffa9ee11d59b3a8dcda8aed629",
     "size_bytes": 518915,
-    "modified_time": "2026-05-14T15:00:31.394639",
-    "last_seen": "2026-05-14T15:00:37.481064+00:00",
+    "modified_time": "2026-05-15T06:33:48.826519",
+    "last_seen": "2026-05-15T06:33:56.975787+00:00",
     "status": "active",
     "first_seen": "2026-05-14T15:00:37.481064+00:00"
   },
@@ -12,8 +12,8 @@
     "path": "sources/kb-hi75c-wob-1.jpg",
     "sha256": "e4f2494cda4cfa1893ecd901ad3154629aaec97ab1452058fe96a9d1ff23e56d",
     "size_bytes": 513893,
-    "modified_time": "2026-05-14T15:00:31.396639",
-    "last_seen": "2026-05-14T15:00:37.481064+00:00",
+    "modified_time": "2026-05-15T06:33:48.827519",
+    "last_seen": "2026-05-15T06:33:56.975787+00:00",
     "status": "active",
     "first_seen": "2026-05-14T15:00:37.481064+00:00"
   },
@@ -21,8 +21,8 @@
     "path": "sources/kb-hi75c-wob-2.jpg",
     "sha256": "f8f946d05077db51dcf1f9949bbfd42d3c158a57f5a657601cd796dfbab90176",
     "size_bytes": 316539,
-    "modified_time": "2026-05-14T15:00:31.397639",
-    "last_seen": "2026-05-14T15:00:37.481064+00:00",
+    "modified_time": "2026-05-15T06:33:48.829519",
+    "last_seen": "2026-05-15T06:33:56.975787+00:00",
     "status": "active",
     "first_seen": "2026-05-14T15:00:37.481064+00:00"
   }
