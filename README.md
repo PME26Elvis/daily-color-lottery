@@ -20,7 +20,7 @@ Put one or more images in `sources/`. GitHub Actions will run once per day, gene
 - Writes machine-readable logs under `logs/`
 - Builds dashboard data under `docs/data/`
 - Publishes a GitHub Pages dashboard through Actions
-- Creates a weekly release bundle
+- Creates a weekly release bundle plus per-source animated showcase assets
 
 ## Quick start
 
@@ -39,6 +39,7 @@ The workflow will commit generated files back into the repository and deploy the
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+# Weekly showcase video packaging also requires ffmpeg on PATH.
 python -m src.generate
 python -m src.build_site
 ```
@@ -55,9 +56,24 @@ logs/                 Run logs, source inventory, and event logs
 docs/                 Dashboard source files
 docs/data/            JSON data consumed by the dashboard
 site/                 Local build output, ignored by git
+dist/                 Release zip output, ignored by git
 src/                  Python implementation
 tests/                Lightweight tests
 ```
+
+
+## Weekly releases
+
+The weekly release workflow creates multiple GitHub Release assets:
+
+- `daily-color-lottery-week-YYYY-MM-DD.zip`: recent generated outputs from `output/archive/` for the last 7 UTC days, plus repository logs.
+- `daily-color-lottery-week-YYYY-MM-DD-showcase-SOURCE-HASH.zip`: one zip per source image, so large source sets stay split across smaller assets. Each source showcase zip contains:
+  - `showcase/weekly-showcase.mp4` — a 16:9 MP4 recap of that source's weekly top 5 scored outputs.
+  - `showcase/weekly-showcase.html` — a single-file HTML report with the MP4 embedded as base64, top-5 cards, scores, metadata, and an inline manifest.
+  - `showcase/manifest.json` — machine-readable source, week, video, and selected-output metadata.
+  - `showcase/build.log` — full build details, including frame selection and the ffmpeg command/stdout/stderr.
+
+The showcase selection is based on `logs/runs.jsonl`: for each source, the workflow filters outputs to the same weekly UTC window, sorts by `score.score`, and picks up to 5 existing output files.
 
 ## Configuration
 
