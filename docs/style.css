@@ -109,6 +109,177 @@ h3 {
   margin-bottom: 18px;
 }
 
+.winner-reveal {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  overflow: hidden;
+}
+
+.winner-reveal-copy {
+  min-width: 0;
+}
+
+.reveal-button {
+  border: 0;
+  border-radius: 999px;
+  padding: 13px 18px;
+  background: linear-gradient(135deg, var(--good), var(--accent));
+  color: #07101f;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.24);
+  transition:
+    filter 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.reveal-button:hover:not(:disabled),
+.reveal-button:focus-visible:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-2px);
+  box-shadow: 0 20px 42px rgba(0, 0, 0, 0.32);
+}
+
+.reveal-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.reveal-carousel {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 10px;
+  min-height: 104px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scroll-snap-type: x proximity;
+}
+
+.reveal-thumb {
+  position: relative;
+  flex: 0 0 150px;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: #11182b;
+  opacity: 0.66;
+  scroll-snap-align: start;
+  transform: scale(0.96);
+  transition:
+    border-color 180ms ease,
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.reveal-thumb img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.reveal-thumb figcaption {
+  position: absolute;
+  inset: auto 8px 8px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  border-radius: 999px;
+  padding: 6px 8px;
+  background: rgba(7, 11, 24, 0.74);
+  color: var(--text);
+  font-size: 0.72rem;
+  backdrop-filter: blur(10px);
+}
+
+.reveal-thumb figcaption strong {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.reveal-thumb figcaption span {
+  color: var(--good);
+  font-weight: 900;
+}
+
+.winner-reveal.is-running .reveal-thumb {
+  animation: carousel-glow 720ms ease-in-out infinite alternate;
+}
+
+.winner-reveal.is-running .reveal-thumb.active,
+.reveal-thumb.active {
+  border-color: var(--good);
+  opacity: 1;
+  transform: scale(1);
+  box-shadow: 0 14px 34px rgba(159, 242, 201, 0.18);
+}
+
+.reveal-card {
+  animation: reveal-card-pop 420ms cubic-bezier(0.2, 0.9, 0.25, 1);
+}
+
+.reveal-card.final {
+  animation: reveal-card-final 720ms cubic-bezier(0.2, 0.9, 0.25, 1);
+}
+
+.score-pulse dd {
+  animation: score-pulse 820ms ease-in-out infinite alternate;
+}
+
+.reveal-card.final .score-pulse dd {
+  animation: score-pulse 900ms ease-in-out 2 alternate;
+}
+
+@keyframes reveal-card-pop {
+  from {
+    opacity: 0.72;
+    transform: translateY(12px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes reveal-card-final {
+  0% {
+    transform: translateY(10px) scale(0.98);
+  }
+  55% {
+    transform: translateY(-4px) scale(1.012);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes carousel-glow {
+  from {
+    filter: saturate(0.92) brightness(0.9);
+  }
+  to {
+    filter: saturate(1.18) brightness(1.06);
+  }
+}
+
+@keyframes score-pulse {
+  from {
+    text-shadow: 0 0 0 rgba(159, 242, 201, 0);
+    transform: scale(1);
+  }
+  to {
+    text-shadow: 0 0 22px rgba(159, 242, 201, 0.52);
+    transform: scale(1.035);
+  }
+}
+
 .winner-card,
 .daily-winner-empty {
   position: relative;
@@ -679,6 +850,14 @@ code {
     border-radius: 26px;
   }
 
+  .winner-reveal {
+    grid-template-columns: 1fr;
+  }
+
+  .reveal-button {
+    width: 100%;
+  }
+
   .winner-image-link,
   .winner-image-link img {
     min-height: 280px;
@@ -710,3 +889,20 @@ code {
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  .winner-reveal.is-running .reveal-thumb,
+  .score-pulse dd,
+  .reveal-card,
+  .reveal-card.final {
+    animation: none !important;
+  }
+}

@@ -203,6 +203,114 @@ function renderDailyWinner() {
   `;
 }
 
+function revealThumbHtml(output, isActive = false) {
+  const imagePath = output?.latest_path || output?.output_path || output?.source_path || "";
+  const sourceName = output?.source_name || output?.source_path || "Unknown source";
+  const styleName = output?.style || "Unknown style";
+  const activeClass = isActive ? " active" : "";
+
+  return `
+    <figure class="reveal-thumb${activeClass}">
+      <img src="${imagePath}" alt="${sourceName} in ${styleName} style" />
+      <figcaption>
+        <strong>${styleName}</strong>
+        <span>${fmtScore(scoreValue(output))}</span>
+      </figcaption>
+    </figure>
+  `;
+}
+
+function renderRevealWinner(output, isFinal = false) {
+  const container = document.querySelector("#daily-winner");
+  if (!container || !output) return;
+
+  const imagePath = output.latest_path || output.output_path;
+  const linkPath = output.output_path || imagePath;
+  const sourceName = output.source_name || output.source_path || "Unknown source";
+  const styleName = output.style || "Unknown style";
+  const runDate = output.run_date || data.latest?.run_date || "—";
+
+  container.innerHTML = `
+    <article class="winner-card reveal-card${isFinal ? " final" : ""}">
+      <a class="winner-image-link" href="${linkPath}" target="_blank" rel="noreferrer">
+        <img src="${imagePath}" alt="Winning output for ${sourceName} in ${styleName} style" />
+        <span class="winner-badge">${isFinal ? "Winner of today" : "Revealing…"}</span>
+        <span class="winner-gradient" aria-hidden="true"></span>
+      </a>
+      <div class="winner-copy">
+        <p class="eyebrow">${isFinal ? "Daily showcase" : "Scoring contender"}</p>
+        <h2>${styleName}</h2>
+        <p class="winner-source">${sourceName}</p>
+        <dl class="winner-stats">
+          <div class="score-pulse">
+            <dt>Score</dt>
+            <dd>${fmtScore(scoreValue(output))}</dd>
+          </div>
+          <div>
+            <dt>Run date</dt>
+            <dd>${runDate}</dd>
+          </div>
+        </dl>
+      </div>
+    </article>
+  `;
+}
+
+function setupWinnerReveal() {
+  const reveal = document.querySelector("#winner-reveal");
+  const button = document.querySelector("#reveal-winner-button");
+  const carousel = document.querySelector("#reveal-carousel");
+  const status = document.querySelector("#winner-reveal-status");
+  const outputs = data.latest?.outputs || [];
+  const bestOutput = data.latest?.best_output;
+
+  if (!reveal || !button || !carousel || !status) return;
+
+  if (!outputs.length || !bestOutput) {
+    button.disabled = true;
+    status.textContent = "No generated outputs are available to reveal yet.";
+    carousel.innerHTML = "";
+    return;
+  }
+
+  const contenders = [...outputs].sort((a, b) => Number(a.index || 0) - Number(b.index || 0));
+  carousel.innerHTML = contenders.slice(0, 8).map((output) => revealThumbHtml(output)).join("");
+
+  button.addEventListener("click", () => {
+    button.disabled = true;
+    reveal.classList.add("is-running");
+    status.textContent = "Shuffling today's contenders…";
+
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const sequence = prefersReducedMotion ? [bestOutput] : [...contenders, bestOutput];
+    const interval = prefersReducedMotion ? 0 : 220;
+    let step = 0;
+
+    const tick = () => {
+      const output = sequence[step] || bestOutput;
+      const isFinal = step >= sequence.length - 1;
+      renderRevealWinner(output, isFinal);
+      carousel.innerHTML = contenders
+        .slice(0, 8)
+        .map((contender) => revealThumbHtml(contender, contender.output_path === output.output_path))
+        .join("");
+
+      if (isFinal) {
+        reveal.classList.remove("is-running");
+        reveal.classList.add("is-complete");
+        status.textContent = `${output.style || "Winner"} wins with a ${fmtScore(scoreValue(output))} score.`;
+        button.textContent = "Winner revealed";
+        return;
+      }
+
+      step += 1;
+      window.setTimeout(tick, interval);
+    };
+
+    tick();
+  });
+}
+
 function renderToday() {
   const latest = data.latest || {};
   const outputs = latest.outputs || [];
@@ -385,6 +493,7 @@ async function init() {
 
   renderMetrics();
   renderDailyWinner();
+  setupWinnerReveal();
   renderToday();
   renderLeaderboardFilters();
   setupLeaderboardFilters();
