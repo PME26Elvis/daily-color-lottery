@@ -20,6 +20,10 @@ Put one or more images in `sources/`. GitHub Actions will run once per day, gene
 - Writes machine-readable logs under `logs/`
 - Builds dashboard data under `docs/data/`
 - Publishes a GitHub Pages dashboard through Actions
+- Shows interactive before/after comparison sliders for each generated output
+- Highlights the highest-scoring output as a daily winner hero showcase
+- Provides an all-time leaderboard with style, source, and run-date filters
+- Builds style analytics with rankings, averages, win counts, recent trends, and best examples
 - Creates a weekly release bundle plus per-source animated showcase assets
 
 ## Quick start
@@ -44,7 +48,7 @@ python -m src.generate
 python -m src.build_site
 ```
 
-Open `site/index.html` after running `python -m src.build_site`.
+Open `site/index.html` after running `python -m src.build_site`. The generated dashboard reads the JSON files in `docs/data/`, including `style-analytics.json` when one or more runs have been recorded.
 
 ## Important folders
 
@@ -61,6 +65,15 @@ src/                  Python implementation
 tests/                Lightweight tests
 ```
 
+
+## Dashboard features
+
+The GitHub Pages dashboard in `docs/` is designed as a lightweight lab report for the latest run and historical results:
+
+- **Daily winner hero**: the latest run's highest-scoring output is promoted above the metrics so the day's top color grade is visible first.
+- **Before/after comparisons**: each generated result includes a draggable comparison slider between the original source image and the graded output.
+- **Style analytics**: `src.generate` writes `logs/style_analytics.json` and `docs/data/style-analytics.json` from the compacted run log. The dashboard ranks styles by average score and displays output counts, best scores, daily wins, source wins, recent 7-day averages, and each style's best example.
+- **Filtered leaderboard**: the all-time leaderboard can be narrowed by style, source image, or run date without rebuilding the site.
 
 ## Weekly releases
 
