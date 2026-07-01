@@ -60,6 +60,58 @@ function renderMetrics() {
     .join("");
 }
 
+function renderDailyWinner() {
+  const bestOutput = data.latest?.best_output;
+  const container = document.querySelector("#daily-winner");
+
+  if (!container) return;
+
+  if (!bestOutput) {
+    container.innerHTML = `
+      <div class="daily-winner-empty">
+        <span class="winner-badge">Winner of today</span>
+        <div>
+          <p class="eyebrow">Daily showcase</p>
+          <h2>No winning image yet</h2>
+          <p class="muted">Run the workflow to crown today's highest-scoring output.</p>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  const imagePath = bestOutput.latest_path || bestOutput.output_path;
+  const linkPath = bestOutput.output_path || imagePath;
+  const sourceName = bestOutput.source_name || bestOutput.source_path || "Unknown source";
+  const styleName = bestOutput.style || "Unknown style";
+  const runDate = bestOutput.run_date || data.latest?.run_date || "—";
+
+  container.innerHTML = `
+    <article class="winner-card">
+      <a class="winner-image-link" href="${linkPath}" target="_blank" rel="noreferrer">
+        <img src="${imagePath}" alt="Winning output for ${sourceName} in ${styleName} style" />
+        <span class="winner-badge">Winner of today</span>
+        <span class="winner-gradient" aria-hidden="true"></span>
+      </a>
+      <div class="winner-copy">
+        <p class="eyebrow">Daily showcase</p>
+        <h2>${styleName}</h2>
+        <p class="winner-source">${sourceName}</p>
+        <dl class="winner-stats">
+          <div>
+            <dt>Score</dt>
+            <dd>${fmtScore(scoreValue(bestOutput))}</dd>
+          </div>
+          <div>
+            <dt>Run date</dt>
+            <dd>${runDate}</dd>
+          </div>
+        </dl>
+      </div>
+    </article>
+  `;
+}
+
 function renderToday() {
   const latest = data.latest || {};
   const outputs = latest.outputs || [];
@@ -183,6 +235,7 @@ async function init() {
   data.events = await loadJson("data/source-events.json", []);
 
   renderMetrics();
+  renderDailyWinner();
   renderToday();
   renderLeaderboard();
   renderEvents();

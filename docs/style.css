@@ -105,6 +105,135 @@ h3 {
   gap: 16px;
 }
 
+.daily-winner {
+  margin-bottom: 18px;
+}
+
+.winner-card,
+.daily-winner-empty {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 34px;
+  background:
+    linear-gradient(135deg, rgba(146, 183, 255, 0.18), rgba(159, 242, 201, 0.08)),
+    var(--panel-strong);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+.winner-card {
+  display: grid;
+  grid-template-columns: minmax(360px, 1.15fr) minmax(280px, 0.85fr);
+  min-height: 430px;
+}
+
+.winner-image-link {
+  position: relative;
+  display: block;
+  min-height: 430px;
+  overflow: hidden;
+  color: inherit;
+}
+
+.winner-image-link img {
+  width: 100%;
+  height: 100%;
+  min-height: 430px;
+  display: block;
+  object-fit: cover;
+  background: #11182b;
+  transform: scale(1.01);
+}
+
+.winner-gradient {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(11, 16, 32, 0.04), rgba(11, 16, 32, 0.38)),
+    linear-gradient(90deg, transparent 52%, rgba(11, 16, 32, 0.35));
+  pointer-events: none;
+}
+
+.winner-badge {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  z-index: 2;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  padding: 9px 13px;
+  background: linear-gradient(135deg, rgba(159, 242, 201, 0.95), rgba(146, 183, 255, 0.95));
+  color: #07101f;
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.25);
+}
+
+.winner-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(26px, 5vw, 54px);
+}
+
+.winner-copy h2 {
+  font-size: clamp(2rem, 5vw, 4.7rem);
+  line-height: 0.95;
+  letter-spacing: -0.07em;
+  text-transform: capitalize;
+}
+
+.winner-source {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 1.05rem;
+  overflow-wrap: anywhere;
+}
+
+.winner-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 28px 0 0;
+}
+
+.winner-stats div {
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.winner-stats dt {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.winner-stats dd {
+  margin: 8px 0 0;
+  color: var(--good);
+  font-size: 1.6rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+.daily-winner-empty {
+  padding: 28px;
+  min-height: 170px;
+}
+
+.daily-winner-empty .winner-badge {
+  position: static;
+  display: inline-block;
+  margin-bottom: 22px;
+}
+
 .metrics {
   grid-template-columns: repeat(5, minmax(0, 1fr));
   margin-bottom: 18px;
@@ -299,6 +428,19 @@ code {
 }
 
 @media (max-width: 1100px) {
+  .winner-card {
+    grid-template-columns: 1fr;
+  }
+
+  .winner-image-link,
+  .winner-image-link img {
+    min-height: 360px;
+  }
+
+  .winner-gradient {
+    background: linear-gradient(180deg, rgba(11, 16, 32, 0.02), rgba(11, 16, 32, 0.52));
+  }
+
   .metrics,
   .outputs,
   .two-column {
@@ -315,6 +457,23 @@ code {
   main,
   footer {
     width: min(100% - 28px, 1440px);
+  }
+
+  .winner-card {
+    border-radius: 26px;
+  }
+
+  .winner-image-link,
+  .winner-image-link img {
+    min-height: 280px;
+  }
+
+  .winner-copy {
+    padding: 24px;
+  }
+
+  .winner-stats {
+    grid-template-columns: 1fr;
   }
 
   .metrics,
