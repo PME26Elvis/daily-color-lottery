@@ -271,6 +271,47 @@ h3 {
   margin-bottom: 18px;
 }
 
+.leaderboard-heading {
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.leaderboard-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.leaderboard-filters label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.leaderboard-filters select {
+  min-width: 140px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel-strong);
+  color: var(--text);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  font: inherit;
+  letter-spacing: normal;
+  padding: 9px 34px 9px 12px;
+  text-transform: none;
+}
+
+.leaderboard-filters select:focus {
+  border-color: var(--accent);
+  outline: 2px solid rgba(146, 183, 255, 0.22);
+  outline-offset: 2px;
+}
+
 .muted {
   color: var(--muted);
 }
@@ -601,5 +642,15 @@ code {
   .outputs,
   .two-column {
     grid-template-columns: 1fr;
+  }
+
+  .leaderboard-heading,
+  .leaderboard-filters {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .leaderboard-filters select {
+    width: 100%;
   }
 }

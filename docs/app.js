@@ -5,6 +5,12 @@ const data = {
   events: [],
 };
 
+const leaderboardFilters = {
+  style: "all",
+  source: "all",
+  runDate: "all",
+};
+
 async function loadJson(path, fallback) {
   try {
     const response = await fetch(path, { cache: "no-store" });
@@ -17,6 +23,90 @@ async function loadJson(path, fallback) {
 
 function scoreValue(item) {
   return item?.score?.score ?? item?.score ?? null;
+}
+
+function sourceKey(item) {
+  return item?.source_path || item?.source_name || "unknown";
+}
+
+function sourceLabel(item) {
+  return item?.source_name || item?.source_path || "Unknown source";
+}
+
+function collectLeaderboardFilterOptions() {
+  const styles = new Set();
+  const sources = new Map();
+  const runDates = new Set();
+
+  const collectOutput = (output) => {
+    if (!output) return;
+    if (output.style) styles.add(output.style);
+    const key = sourceKey(output);
+    sources.set(key, sourceLabel(output));
+    if (output.run_date) runDates.add(output.run_date);
+  };
+
+  for (const row of data.leaderboard || []) collectOutput(row);
+  for (const run of data.runs || []) {
+    if (run.run_date) runDates.add(run.run_date);
+    for (const style of run.styles || []) styles.add(style);
+    for (const output of run.outputs || []) collectOutput(output);
+    collectOutput(run.best_output);
+  }
+  for (const output of data.latest?.outputs || []) collectOutput(output);
+  collectOutput(data.latest?.best_output);
+
+  return {
+    styles: [...styles].sort((a, b) => a.localeCompare(b)),
+    sources: [...sources.entries()].sort((a, b) => a[1].localeCompare(b[1])),
+    runDates: [...runDates].sort((a, b) => b.localeCompare(a)),
+  };
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+function optionHtml(value, label) {
+  return `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`;
+}
+
+function populateSelect(selector, options, allLabel) {
+  const select = document.querySelector(selector);
+  if (!select) return;
+  select.innerHTML = [optionHtml("all", allLabel), ...options].join("");
+}
+
+function renderLeaderboardFilters() {
+  const { styles, sources, runDates } = collectLeaderboardFilterOptions();
+  populateSelect("#filter-style", styles.map((style) => optionHtml(style, style)), "All styles");
+  populateSelect("#filter-source", sources.map(([value, label]) => optionHtml(value, label)), "All sources");
+  populateSelect("#filter-run-date", runDates.map((date) => optionHtml(date, date)), "All dates");
+}
+
+function setupLeaderboardFilters() {
+  document.querySelector("#leaderboard-filters")?.addEventListener("submit", (event) => event.preventDefault());
+
+  const controls = [
+    ["#filter-style", "style"],
+    ["#filter-source", "source"],
+    ["#filter-run-date", "runDate"],
+  ];
+
+  for (const [selector, key] of controls) {
+    const select = document.querySelector(selector);
+    if (!select) continue;
+    select.value = leaderboardFilters[key];
+    select.addEventListener("change", (event) => {
+      leaderboardFilters[key] = event.target.value;
+      renderLeaderboard();
+    });
+  }
 }
 
 function bySource(outputs) {
@@ -186,7 +276,11 @@ function renderToday() {
 
 function renderLeaderboard() {
   const container = document.querySelector("#leaderboard");
-  const rows = (data.leaderboard || []).slice(0, 20);
+  const rows = (data.leaderboard || [])
+    .filter((row) => leaderboardFilters.style === "all" || row.style === leaderboardFilters.style)
+    .filter((row) => leaderboardFilters.source === "all" || sourceKey(row) === leaderboardFilters.source)
+    .filter((row) => leaderboardFilters.runDate === "all" || row.run_date === leaderboardFilters.runDate)
+    .slice(0, 20);
   if (!rows.length) {
     container.innerHTML = `<div class="empty">No leaderboard entries yet.</div>`;
     return;
@@ -255,6 +349,8 @@ async function init() {
   renderMetrics();
   renderDailyWinner();
   renderToday();
+  renderLeaderboardFilters();
+  setupLeaderboardFilters();
   renderLeaderboard();
   renderEvents();
   renderRuns();
