@@ -578,6 +578,59 @@ code {
   padding: 20px;
 }
 
+.style-analytics {
+  display: grid;
+  gap: 14px;
+}
+
+.analytics-summary {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+}
+
+.style-rankings {
+  display: grid;
+  gap: 10px;
+}
+
+.style-row {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) minmax(260px, 0.7fr);
+  align-items: center;
+  gap: 14px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 14px;
+  background: var(--panel-strong);
+}
+
+.rank {
+  color: var(--accent);
+  font-weight: 900;
+  font-size: 1.25rem;
+}
+
+.trend-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  text-align: right;
+}
+
+.trend-metrics span {
+  color: var(--good);
+  font-weight: 800;
+}
+
+.trend-metrics small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
 @media (max-width: 1100px) {
   .winner-card {
     grid-template-columns: 1fr;
@@ -594,7 +647,8 @@ code {
 
   .metrics,
   .outputs,
-  .two-column {
+  .two-column,
+  .style-row {
     grid-template-columns: 1fr 1fr;
   }
 }
@@ -640,7 +694,8 @@ code {
 
   .metrics,
   .outputs,
-  .two-column {
+  .two-column,
+  .style-row {
     grid-template-columns: 1fr;
   }
 
@@ -654,3 +709,4 @@ code {
     width: 100%;
   }
 }
+

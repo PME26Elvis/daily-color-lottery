@@ -3,6 +3,7 @@ const data = {
   leaderboard: [],
   runs: [],
   events: [],
+  styleAnalytics: {},
 };
 
 const leaderboardFilters = {
@@ -301,6 +302,41 @@ function renderLeaderboard() {
     .join("");
 }
 
+function renderStyleAnalytics() {
+  const container = document.querySelector("#style-analytics");
+  const summary = data.styleAnalytics || {};
+  const rows = (summary.styles || []).slice(0, 12);
+  if (!rows.length) {
+    container.innerHTML = `<div class="empty">No style analytics yet. Generate a run to build rankings.</div>`;
+    return;
+  }
+  container.innerHTML = `
+    <div class="analytics-summary muted">
+      ${summary.output_count || 0} scored outputs across ${summary.run_count || 0} runs · latest run ${summary.latest_run_date || "—"}
+    </div>
+    <div class="style-rankings">
+      ${rows
+        .map(
+          (row) => `
+          <article class="style-row">
+            <div class="rank">#${row.rank}</div>
+            <div>
+              <strong>${row.style}</strong>
+              <p class="row-subtitle">${row.count} outputs · ${row.daily_wins} daily wins · ${row.source_wins} source wins</p>
+            </div>
+            <div class="trend-metrics">
+              <span><small>Avg</small>${fmtScore(row.average_score)}</span>
+              <span><small>Best</small>${fmtScore(row.best_score)}</span>
+              <span><small>7-day</small>${fmtScore(row.recent_7_day_average)}</span>
+            </div>
+          </article>
+        `,
+        )
+        .join("")}
+    </div>
+  `;
+}
+
 function renderEvents() {
   const container = document.querySelector("#source-events");
   const rows = (data.events || []).slice(-20).reverse();
@@ -345,6 +381,7 @@ async function init() {
   data.leaderboard = await loadJson("data/leaderboard.json", []);
   data.runs = await loadJson("data/runs.json", []);
   data.events = await loadJson("data/source-events.json", []);
+  data.styleAnalytics = await loadJson("data/style-analytics.json", {});
 
   renderMetrics();
   renderDailyWinner();
@@ -352,6 +389,7 @@ async function init() {
   renderLeaderboardFilters();
   setupLeaderboardFilters();
   renderLeaderboard();
+  renderStyleAnalytics();
   renderEvents();
   renderRuns();
 }
