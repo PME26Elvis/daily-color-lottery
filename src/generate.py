@@ -9,6 +9,7 @@ from typing import Any
 from src.grading import score_image
 from src.image_ops import grade_image, open_rgb
 from src.randomness import numpy_seed, random_metadata, sample_ranges
+from src.analytics import write_style_analytics
 from src.source_tracking import build_inventory, diff_inventory, merge_inventory
 from src.utils import (
     append_jsonl,
@@ -197,6 +198,7 @@ def main() -> int:
     write_json(docs_data_dir / "leaderboard.json", leaderboard)
     write_json(docs_data_dir / "source-inventory.json", merged_inventory)
     write_json(docs_data_dir / "source-events.json", load_jsonl(logs_dir / "source_events.jsonl")[-200:])
+    write_style_analytics(logs_dir, docs_data_dir)
 
     print(f"run_id={run_id}")
     print(f"sources={len(source_paths)} outputs={len(all_outputs)} errors={len(errors)}")
