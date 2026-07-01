@@ -94,13 +94,31 @@ function renderToday() {
               .map(
                 (row) => `
                 <article class="output-card ${row.best_for_source_today ? "best" : ""}">
-                  <a href="${row.output_path}" target="_blank" rel="noreferrer"><img src="${row.latest_path}" alt="${row.style}" /></a>
+                  <div class="comparison" style="--comparison-position: 50%">
+                    <img class="comparison-image comparison-image-base" src="${row.source_path || source}" alt="Original ${source}" />
+                    <div class="comparison-overlay">
+                      <img class="comparison-image" src="${row.latest_path}" alt="Graded ${row.style}" />
+                    </div>
+                    <div class="comparison-label comparison-label-original">Original</div>
+                    <div class="comparison-label comparison-label-graded">Graded</div>
+                    <div class="comparison-divider" aria-hidden="true"></div>
+                    <input
+                      class="comparison-slider"
+                      type="range"
+                      min="0"
+                      max="100"
+                      value="50"
+                      aria-label="Compare original and graded image for ${row.style}"
+                      oninput="this.parentElement.style.setProperty('--comparison-position', this.value + '%')"
+                    />
+                  </div>
                   <div class="output-body">
                     <div class="output-top">
                       <strong>${row.style}</strong>
                       <span class="score">${fmtScore(scoreValue(row))}</span>
                     </div>
                     <p class="muted">${row.best_for_source_today ? "Best for this source today" : row.style_description || ""}</p>
+                    <a class="full-image-link" href="${row.output_path}" target="_blank" rel="noreferrer">Open full image</a>
                     <pre class="params">${paramLines(row.params)}</pre>
                   </div>
                 </article>
