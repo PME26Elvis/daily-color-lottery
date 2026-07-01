@@ -32,11 +32,31 @@
 
       <section class="two-column">
         <div class="panel">
-          <div class="section-heading">
+          <div class="section-heading leaderboard-heading">
             <div>
               <p class="eyebrow">All-time</p>
               <h2>Leaderboard</h2>
             </div>
+            <form class="leaderboard-filters" id="leaderboard-filters" aria-label="Leaderboard filters">
+              <label>
+                <span>Style</span>
+                <select id="filter-style" name="style">
+                  <option value="all">All styles</option>
+                </select>
+              </label>
+              <label>
+                <span>Source</span>
+                <select id="filter-source" name="source">
+                  <option value="all">All sources</option>
+                </select>
+              </label>
+              <label>
+                <span>Run date</span>
+                <select id="filter-run-date" name="run-date">
+                  <option value="all">All dates</option>
+                </select>
+              </label>
+            </form>
           </div>
           <div id="leaderboard" class="leaderboard"></div>
         </div>
