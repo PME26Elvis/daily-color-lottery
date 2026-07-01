@@ -17,6 +17,16 @@
     </header>
 
     <main>
+      <section class="winner-reveal panel" id="winner-reveal" aria-labelledby="winner-reveal-title">
+        <div class="winner-reveal-copy">
+          <p class="eyebrow">Daily reveal</p>
+          <h2 id="winner-reveal-title">Crown today's color grade</h2>
+          <p class="muted" id="winner-reveal-status">Shuffle through today's generated outputs before revealing the top score.</p>
+        </div>
+        <button class="reveal-button" id="reveal-winner-button" type="button">Reveal today’s winner</button>
+        <div class="reveal-carousel" id="reveal-carousel" aria-hidden="true"></div>
+      </section>
+
       <section class="daily-winner" id="daily-winner" aria-live="polite"></section>
 
       <section class="grid metrics" id="metrics"></section>
