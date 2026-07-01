@@ -194,7 +194,117 @@ h3 {
   outline: 2px solid var(--good);
 }
 
-.output-card img {
+
+.comparison {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  background: #11182b;
+  touch-action: pan-y;
+  isolation: isolate;
+}
+
+.comparison-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  background: #11182b;
+  pointer-events: none;
+  user-select: none;
+}
+
+.comparison-image-base {
+  filter: saturate(0.92);
+}
+
+.comparison-overlay {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 1;
+  clip-path: polygon(0 0, var(--comparison-position, 50%) 0, var(--comparison-position, 50%) 100%, 0 100%);
+}
+
+.comparison-label {
+  position: absolute;
+  top: 10px;
+  z-index: 3;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  padding: 5px 8px;
+  background: rgba(7, 11, 24, 0.72);
+  color: var(--text);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  backdrop-filter: blur(10px);
+}
+
+.comparison-label-original {
+  right: 10px;
+}
+
+.comparison-label-graded {
+  left: 10px;
+}
+
+.comparison-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--comparison-position, 50%);
+  z-index: 2;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 0 18px rgba(0, 0, 0, 0.65);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.comparison-divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 34px;
+  height: 34px;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: 999px;
+  background:
+    linear-gradient(45deg, transparent 43%, rgba(255, 255, 255, 0.9) 43% 57%, transparent 57%),
+    linear-gradient(-45deg, transparent 43%, rgba(255, 255, 255, 0.9) 43% 57%, transparent 57%),
+    rgba(7, 11, 24, 0.72);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.comparison-slider {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: ew-resize;
+}
+
+.full-image-link {
+  display: inline-flex;
+  margin-top: 10px;
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.full-image-link:hover,
+.full-image-link:focus-visible {
+  text-decoration: underline;
+}
+.output-card > a > img {
   width: 100%;
   aspect-ratio: 4 / 3;
   object-fit: cover;
@@ -309,6 +419,17 @@ code {
 @media (max-width: 720px) {
   .hero {
     flex-direction: column;
+  }
+
+  .comparison-label {
+    top: 8px;
+    padding: 4px 7px;
+    font-size: 0.62rem;
+  }
+
+  .comparison-divider::after {
+    width: 30px;
+    height: 30px;
   }
 
   .hero,
