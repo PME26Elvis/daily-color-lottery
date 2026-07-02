@@ -445,22 +445,96 @@ function renderStyleAnalytics() {
   `;
 }
 
+function sourceEventLabel(eventName) {
+  return String(eventName || "source_changed")
+    .replace(/^source_/, "")
+    .replaceAll("_", " ");
+}
+
+function sourceEventClass(eventName) {
+  const normalized = String(eventName || "changed").replace(/^source_/, "");
+  if (["added", "changed", "removed", "reactivated"].includes(normalized)) return normalized;
+  return "changed";
+}
+
+function sourceEventHashEntries(event) {
+  return Object.entries(event || {})
+    .filter(([key, value]) => key.toLowerCase().includes("hash") && value !== null && value !== undefined && value !== "")
+    .sort(([left], [right]) => left.localeCompare(right));
+}
+
+function renderSourceEvent(event) {
+  const eventClass = sourceEventClass(event.event);
+  const hashEntries = sourceEventHashEntries(event);
+
+  return `
+    <li class="source-timeline-event event-${eventClass}">
+      <div class="source-event-marker" aria-hidden="true"></div>
+      <div class="source-event-card">
+        <div class="source-event-topline">
+          <span class="source-event-badge">${escapeHtml(sourceEventLabel(event.event))}</span>
+          <time>${escapeHtml(event.time || "Time unknown")}</time>
+        </div>
+        <p class="row-subtitle"><code>${escapeHtml(event.path || "unknown source")}</code></p>
+        ${
+          hashEntries.length
+            ? `<dl class="source-event-hashes">
+                ${hashEntries
+                  .map(
+                    ([key, value]) => `
+                      <div>
+                        <dt>${escapeHtml(key)}</dt>
+                        <dd><code>${escapeHtml(value)}</code></dd>
+                      </div>
+                    `,
+                  )
+                  .join("")}
+              </dl>`
+            : ""
+        }
+      </div>
+    </li>
+  `;
+}
+
 function renderEvents() {
   const container = document.querySelector("#source-events");
-  const rows = (data.events || []).slice(-20).reverse();
+  const rows = data.events || [];
   if (!rows.length) {
     container.innerHTML = `<div class="empty">No source changes recorded yet.</div>`;
     return;
   }
-  container.innerHTML = rows
+
+  const groupedEvents = new Map();
+  for (const event of rows) {
+    const path = event.path || "unknown source";
+    if (!groupedEvents.has(path)) groupedEvents.set(path, []);
+    groupedEvents.get(path).push(event);
+  }
+
+  const timelines = [...groupedEvents.entries()]
+    .map(([path, events]) => ({
+      path,
+      events: events.sort((a, b) => String(b.time || "").localeCompare(String(a.time || ""))),
+    }))
+    .sort((a, b) => String(b.events[0]?.time || "").localeCompare(String(a.events[0]?.time || "")));
+
+  container.innerHTML = timelines
     .map(
-      (event) => `
-      <div class="event">
-        <strong>${event.event}</strong>
-        <p class="row-subtitle"><code>${event.path}</code></p>
-        <p class="row-subtitle">${event.time || ""}</p>
-      </div>
-    `,
+      ({ path, events }) => `
+        <article class="source-timeline">
+          <header class="source-timeline-header">
+            <div>
+              <p class="eyebrow">Source timeline</p>
+              <h3><code>${escapeHtml(path)}</code></h3>
+            </div>
+            <span>${events.length} ${events.length === 1 ? "event" : "events"}</span>
+          </header>
+          <ol class="source-timeline-events">
+            ${events.map(renderSourceEvent).join("")}
+          </ol>
+        </article>
+      `,
     )
     .join("");
 }
