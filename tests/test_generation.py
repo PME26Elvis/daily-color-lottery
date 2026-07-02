@@ -50,6 +50,45 @@ def test_score_image_returns_stable_component_keys():
         assert 0 <= score[key] <= 100
 
 
+def test_score_image_accepts_legacy_weight_config():
+    img = Image.new("RGB", (32, 32), (128, 128, 128))
+    legacy_weights = {
+        "exposure": 0.26,
+        "contrast": 0.20,
+        "saturation": 0.20,
+        "clipping": 0.18,
+        "sharpness": 0.10,
+        "color_balance": 0.06,
+    }
+
+    score = score_image(img, legacy_weights)
+
+    assert 0 <= score["score"] <= 100
+    assert "palette_diversity_score" in score
+    assert "local_contrast_score" in score
+    assert "highlight_rolloff_score" in score
+    assert "distinctiveness_score" in score
+
+
+def test_score_image_new_component_fields_are_numeric_and_bounded():
+    img = Image.new("RGB", (32, 32))
+    colors = [(220, 40, 40), (40, 180, 80), (40, 80, 220), (235, 220, 60)]
+    for x in range(32):
+        for y in range(32):
+            img.putpixel((x, y), colors[(x // 8 + y // 8) % len(colors)])
+
+    score = score_image(img)
+    component_keys = {
+        "palette_diversity_score",
+        "local_contrast_score",
+        "highlight_rolloff_score",
+        "distinctiveness_score",
+    }
+
+    for key in component_keys:
+        assert isinstance(score[key], float)
+        assert 0 <= score[key] <= 100
+
 def test_project_has_required_dirs():
     root = Path(__file__).resolve().parents[1]
     assert (root / "sources").exists()
