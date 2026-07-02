@@ -2,8 +2,10 @@ from pathlib import Path
 
 from PIL import Image
 
+from src.generate import load_replay_record, replay_outputs
 from src.grading import score_image
 from src.image_ops import grade_image
+from src.utils import append_jsonl, read_json
 
 
 def test_grade_image_preserves_size():
@@ -38,3 +40,77 @@ def test_project_has_required_dirs():
     assert (root / "sources").exists()
     assert (root / "docs").exists()
     assert (root / "config" / "settings.json").exists()
+
+
+def test_replay_outputs_use_replay_metadata_and_paths(tmp_path):
+    source_dir = tmp_path / "sources"
+    source_dir.mkdir()
+    source_path = source_dir / "sample.png"
+    Image.new("RGB", (8, 8), (120, 80, 40)).save(source_path)
+
+    record = {
+        "run_id": "2026-07-02T00-00-00Z",
+        "outputs": [
+            {
+                "run_id": "2026-07-02T00-00-00Z",
+                "source_path": "sources/sample.png",
+                "source_name": "sample.png",
+                "source_slug": "sample",
+                "style": "fixed_style",
+                "style_description": "Fixed replay style.",
+                "index": 1,
+                "params": {
+                    "exposure": 0.0,
+                    "brightness": 0.0,
+                    "contrast": 1.0,
+                    "saturation": 1.0,
+                    "vibrance": 0.0,
+                    "temperature": 0.0,
+                    "tint": 0.0,
+                    "shadows": 0.0,
+                    "highlights": 0.0,
+                    "gamma": 1.0,
+                    "fade": 0.0,
+                    "vignette": 0.0,
+                    "grain": 0.0,
+                },
+                "grain_seed_hex": "0x7b",
+                "score": {"score": 50.0},
+            }
+        ],
+    }
+
+    summary = replay_outputs(
+        root=tmp_path,
+        output_dir=tmp_path / "output",
+        logs_dir=tmp_path / "logs",
+        record=record,
+        quality=90,
+        weights={},
+        created_at="2026-07-02T00:00:00+00:00",
+    )
+
+    assert summary["mode"] == "replay"
+    assert summary["replay_of_run_id"] == "2026-07-02T00-00-00Z"
+    assert summary["outputs_generated"] == 1
+    output = summary["outputs"][0]
+    assert output["mode"] == "replay"
+    assert output["grain_seed_hex"] == "0x7b"
+    assert output["params"] == record["outputs"][0]["params"]
+    assert output["latest_path"] is None
+    assert output["output_path"] == (
+        "output/replay/2026-07-02t00-00-00z/sample/"
+        "2026-07-02T00-00-00Z_01_fixed_style.jpg"
+    )
+    assert (tmp_path / output["output_path"]).exists()
+    assert read_json(tmp_path / "logs" / "latest_replay_run.json", {})["mode"] == "replay"
+
+
+def test_load_replay_record_by_run_id(tmp_path):
+    logs_dir = tmp_path / "logs"
+    append_jsonl(logs_dir / "runs.jsonl", {"run_id": "first", "outputs": []})
+    append_jsonl(logs_dir / "runs.jsonl", {"run_id": "wanted", "outputs": [{"style": "a"}]})
+
+    record = load_replay_record(logs_dir, None, "wanted")
+
+    assert record == {"run_id": "wanted", "outputs": [{"style": "a"}]}
