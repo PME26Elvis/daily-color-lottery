@@ -131,6 +131,35 @@ function paramLines(params) {
     .join("\n");
 }
 
+function scoreBreakdownHtml(row) {
+  const components = [
+    ["contrast", "Contrast"],
+    ["exposure_balance", "Exposure"],
+    ["saturation_balance", "Saturation"],
+    ["detail", "Detail"],
+  ];
+  const bars = components
+    .map(([key, label]) => {
+      const rawValue = row?.score?.[key];
+      if (rawValue === null || rawValue === undefined || Number.isNaN(Number(rawValue))) return "";
+      const value = Math.max(0, Math.min(100, Number(rawValue)));
+      return `
+        <div class="score-component" title="${label}: ${fmtScore(value)}">
+          <span class="score-component-label">${label}</span>
+          <span class="score-component-track" aria-hidden="true">
+            <span class="score-component-fill" style="width: ${value}%"></span>
+          </span>
+          <span class="score-component-value">${fmtScore(value)}</span>
+        </div>
+      `;
+    })
+    .filter(Boolean)
+    .join("");
+
+  if (!bars) return "";
+  return `<div class="score-breakdown" aria-label="Score component breakdown">${bars}</div>`;
+}
+
 function renderMetrics() {
   const latest = data.latest || {};
   const metrics = [
@@ -198,6 +227,7 @@ function renderDailyWinner() {
             <dd>${runDate}</dd>
           </div>
         </dl>
+        ${scoreBreakdownHtml(bestOutput)}
       </div>
     </article>
   `;
@@ -251,6 +281,7 @@ function renderRevealWinner(output, isFinal = false) {
             <dd>${runDate}</dd>
           </div>
         </dl>
+        ${scoreBreakdownHtml(output)}
       </div>
     </article>
   `;
@@ -468,6 +499,7 @@ function renderToday() {
                       <span class="score">${fmtScore(scoreValue(row))}</span>
                     </div>
                     <p class="muted">${row.best_for_source_today ? "Best for this source today" : row.style_description || ""}</p>
+                    ${scoreBreakdownHtml(row)}
                     <a class="full-image-link" href="${row.output_path}" target="_blank" rel="noreferrer">Open full image</a>
                     <pre class="params">${paramLines(row.params)}</pre>
                   </div>
@@ -501,6 +533,7 @@ function renderLeaderboard() {
         <div>
           <div class="row-title">#${index + 1} · ${row.style}</div>
           <div class="row-subtitle">${row.source_name || row.source_path} · ${row.run_date}</div>
+          ${scoreBreakdownHtml(row)}
         </div>
         <strong class="score">${fmtScore(scoreValue(row))}</strong>
       </a>

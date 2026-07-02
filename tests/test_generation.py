@@ -33,6 +33,21 @@ def test_score_image_range():
     assert 0 <= score["score"] <= 100
 
 
+def test_score_image_returns_stable_component_keys():
+    img = Image.new("RGB", (32, 32), (128, 128, 128))
+    score = score_image(img)
+    expected_keys = {
+        "score",
+        "contrast",
+        "exposure_balance",
+        "saturation_balance",
+        "detail",
+    }
+    assert expected_keys <= score.keys()
+    for key in expected_keys:
+        assert 0 <= score[key] <= 100
+
+
 def test_project_has_required_dirs():
     root = Path(__file__).resolve().parents[1]
     assert (root / "sources").exists()
