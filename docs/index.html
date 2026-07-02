@@ -7,8 +7,8 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <header class="hero">
-      <div>
+    <header class="hero hero-shell">
+      <div class="hero-copy">
         <p class="eyebrow">GitHub Actions Image Experiment</p>
         <h1>Daily Color Lottery</h1>
         <p class="subtitle">A lab-style dashboard for daily randomized color grading runs with interactive before/after comparisons.</p>
@@ -16,8 +16,8 @@
       <div class="status-pill" id="run-status">Loading…</div>
     </header>
 
-    <main>
-      <section class="winner-reveal panel" id="winner-reveal" aria-labelledby="winner-reveal-title">
+    <main class="dashboard-shell">
+      <section class="winner-reveal panel gallery-panel" id="winner-reveal" aria-labelledby="winner-reveal-title">
         <div class="winner-reveal-copy">
           <p class="eyebrow">Daily reveal</p>
           <h2 id="winner-reveal-title">Crown today's color grade</h2>
@@ -27,11 +27,11 @@
         <div class="reveal-carousel" id="reveal-carousel" aria-hidden="true"></div>
       </section>
 
-      <section class="daily-winner" id="daily-winner" aria-live="polite"></section>
+      <section class="daily-winner gallery-panel" id="daily-winner" aria-live="polite"></section>
 
       <section class="grid metrics" id="metrics"></section>
 
-      <section class="panel">
+      <section class="panel gallery-panel today-gallery-panel">
         <div class="section-heading">
           <div>
             <p class="eyebrow">Today</p>
@@ -62,8 +62,8 @@
         <div id="source-analytics" class="source-analytics"></div>
       </section>
 
-      <section class="two-column">
-        <div class="panel">
+      <section class="two-column leaderboard-gallery">
+        <div class="panel gallery-panel">
           <div class="section-heading leaderboard-heading">
             <div>
               <p class="eyebrow">All-time</p>
@@ -93,7 +93,7 @@
           <div id="leaderboard" class="leaderboard"></div>
         </div>
 
-        <div class="panel">
+        <div class="panel gallery-panel">
           <div class="section-heading">
             <div>
               <p class="eyebrow">Repository</p>
