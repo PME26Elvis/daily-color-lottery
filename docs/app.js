@@ -73,6 +73,27 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;");
 }
 
+
+function paletteColors(row) {
+  return Array.isArray(row?.palette) ? row.palette.filter((color) => /^#[0-9a-fA-F]{6}$/.test(color)) : [];
+}
+
+function paletteHtml(row, label = "Dominant palette") {
+  const colors = paletteColors(row);
+  if (!colors.length) return "";
+  return `
+    <div class="palette" aria-label="${escapeHtml(label)}">
+      ${colors
+        .map((color, index) => {
+          const safeColor = escapeHtml(color);
+          const chipLabel = `${label} color ${index + 1}: ${color}`;
+          return `<span class="palette-chip" style="--chip-color: ${safeColor}" title="${escapeHtml(chipLabel)}"><span class="sr-only">${escapeHtml(chipLabel)}</span></span>`;
+        })
+        .join("")}
+    </div>
+  `;
+}
+
 function optionHtml(value, label) {
   return `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`;
 }
@@ -188,6 +209,7 @@ function renderDailyWinner() {
         <p class="eyebrow">Daily showcase</p>
         <h2>${styleName}</h2>
         <p class="winner-source">${sourceName}</p>
+        ${paletteHtml(bestOutput, "Winning output palette")}
         <dl class="winner-stats">
           <div>
             <dt>Score</dt>
@@ -241,6 +263,7 @@ function renderRevealWinner(output, isFinal = false) {
         <p class="eyebrow">${isFinal ? "Daily showcase" : "Scoring contender"}</p>
         <h2>${styleName}</h2>
         <p class="winner-source">${sourceName}</p>
+        ${paletteHtml(output, "Winning output palette")}
         <dl class="winner-stats">
           <div class="score-pulse">
             <dt>Score</dt>
@@ -369,6 +392,7 @@ function renderToday() {
                       <span class="score">${fmtScore(scoreValue(row))}</span>
                     </div>
                     <p class="muted">${row.best_for_source_today ? "Best for this source today" : row.style_description || ""}</p>
+                    ${paletteHtml(row, `${row.style || "Output"} palette`)}
                     <a class="full-image-link" href="${row.output_path}" target="_blank" rel="noreferrer">Open full image</a>
                     <pre class="params">${paramLines(row.params)}</pre>
                   </div>
@@ -402,6 +426,7 @@ function renderLeaderboard() {
         <div>
           <div class="row-title">#${index + 1} · ${row.style}</div>
           <div class="row-subtitle">${row.source_name || row.source_path} · ${row.run_date}</div>
+          ${paletteHtml(row, `${row.style || "Leaderboard output"} palette`)}
         </div>
         <strong class="score">${fmtScore(scoreValue(row))}</strong>
       </a>

@@ -3,7 +3,7 @@ from pathlib import Path
 from PIL import Image
 
 from src.grading import score_image
-from src.image_ops import grade_image
+from src.image_ops import dominant_palette_hex, grade_image
 
 
 def test_grade_image_preserves_size():
@@ -38,3 +38,39 @@ def test_project_has_required_dirs():
     assert (root / "sources").exists()
     assert (root / "docs").exists()
     assert (root / "config" / "settings.json").exists()
+
+
+def test_dominant_palette_hex_shape_and_format():
+    img = Image.new("RGB", (20, 20), (255, 0, 0))
+    for x in range(10, 20):
+        for y in range(20):
+            img.putpixel((x, y), (0, 128, 255))
+
+    palette = dominant_palette_hex(img)
+
+    assert len(palette) == 2
+    assert all(isinstance(color, str) for color in palette)
+    assert all(len(color) == 7 for color in palette)
+    assert all(color.startswith("#") for color in palette)
+    assert all(set(color[1:]) <= set("0123456789ABCDEF") for color in palette)
+
+
+def test_dominant_palette_hex_limits_to_five_colors():
+    img = Image.new("RGB", (50, 10))
+    colors = [
+        (255, 0, 0),
+        (0, 255, 0),
+        (0, 0, 255),
+        (255, 255, 0),
+        (255, 0, 255),
+        (0, 255, 255),
+    ]
+    for index, color in enumerate(colors):
+        for x in range(index * 8, min((index + 1) * 8, 50)):
+            for y in range(10):
+                img.putpixel((x, y), color)
+
+    palette = dominant_palette_hex(img)
+
+    assert len(palette) == 5
+    assert all(color.startswith("#") and len(color) == 7 for color in palette)
