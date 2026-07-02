@@ -48,6 +48,66 @@ def iter_run_outputs(runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return rows
 
 
+def _source_key(output: dict[str, Any]) -> str:
+    return str(output.get("source_path") or output.get("source_sha256") or output.get("source_name") or "unknown")
+
+
+def build_source_analytics(runs: list[dict[str, Any]]) -> dict[str, Any]:
+    """Aggregate source image performance metrics from compacted run summaries."""
+    outputs = iter_run_outputs(runs)
+    by_source: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    dates = [_parse_date(run.get("run_date")) for run in runs]
+    valid_dates = [run_date for run_date in dates if run_date is not None]
+    latest_date = max(valid_dates) if valid_dates else None
+
+    for output in outputs:
+        if _score_value(output) is None:
+            continue
+        by_source[_source_key(output)].append(output)
+
+    sources = []
+    for key, rows in by_source.items():
+        scored = [(row, _score_value(row)) for row in rows]
+        scores = [score for _row, score in scored if score is not None]
+        best_row, best_score = max(scored, key=lambda item: item[1] if item[1] is not None else -1)
+        sources.append(
+            {
+                "source_key": key,
+                "source_path": best_row.get("source_path"),
+                "source_name": best_row.get("source_name"),
+                "source_sha256": best_row.get("source_sha256"),
+                "source_slug": best_row.get("source_slug"),
+                "count": len(scores),
+                "average_score": round(sum(scores) / len(scores), 2),
+                "best_score": round(float(best_score), 2),
+                "daily_wins": sum(1 for row in rows if row.get("daily_win")),
+                "source_wins": sum(1 for row in rows if row.get("best_for_source_today")),
+                "best_style": best_row.get("style") or "unknown",
+                "best_output": best_row,
+            }
+        )
+
+    sources.sort(
+        key=lambda row: (
+            float(row["average_score"]),
+            float(row["best_score"]),
+            int(row["source_wins"]),
+            int(row["daily_wins"]),
+            str(row["source_key"]),
+        ),
+        reverse=True,
+    )
+    for index, row in enumerate(sources, start=1):
+        row["rank"] = index
+
+    return {
+        "run_count": len(runs),
+        "output_count": sum(row["count"] for row in sources),
+        "latest_run_date": latest_date.isoformat() if latest_date else None,
+        "sources": sources,
+    }
+
+
 def build_style_analytics(runs: list[dict[str, Any]]) -> dict[str, Any]:
     """Aggregate style performance metrics from compacted run summaries."""
     outputs = iter_run_outputs(runs)
@@ -115,7 +175,11 @@ def read_compacted_runs(path: Path, limit: int = 365) -> list[dict[str, Any]]:
 
 
 def write_style_analytics(logs_dir: Path, docs_data_dir: Path, limit: int = 365) -> dict[str, Any]:
-    analytics = build_style_analytics(read_compacted_runs(logs_dir / "runs.jsonl", limit=limit))
+    runs = read_compacted_runs(logs_dir / "runs.jsonl", limit=limit)
+    analytics = build_style_analytics(runs)
+    source_analytics = build_source_analytics(runs)
     write_json(logs_dir / "style_analytics.json", analytics)
     write_json(docs_data_dir / "style-analytics.json", analytics)
+    write_json(logs_dir / "source_analytics.json", source_analytics)
+    write_json(docs_data_dir / "source-analytics.json", source_analytics)
     return analytics

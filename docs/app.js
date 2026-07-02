@@ -4,6 +4,7 @@ const data = {
   runs: [],
   events: [],
   styleAnalytics: {},
+  sourceAnalytics: {},
 };
 
 const leaderboardFilters = {
@@ -445,6 +446,54 @@ function renderStyleAnalytics() {
   `;
 }
 
+function renderSourceAnalytics() {
+  const container = document.querySelector("#source-analytics");
+  const summary = data.sourceAnalytics || {};
+  const rows = (summary.sources || []).slice(0, 12);
+  if (!container) return;
+  if (!rows.length) {
+    container.innerHTML = `<div class="empty">No source analytics yet. Generate a run to build source rankings.</div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="analytics-summary muted">
+      ${summary.output_count || 0} scored outputs across ${summary.run_count || 0} runs · latest run ${summary.latest_run_date || "—"}
+    </div>
+    <div class="source-rankings">
+      ${rows
+        .map((row) => {
+          const bestOutput = row.best_output || {};
+          const imagePath = bestOutput.latest_path || bestOutput.output_path || row.source_path || "";
+          const linkPath = bestOutput.output_path || imagePath;
+          const sourceName = row.source_name || row.source_path || row.source_sha256 || "Unknown source";
+          return `
+            <article class="source-rank-card">
+              <a class="source-rank-image" href="${linkPath}" target="_blank" rel="noreferrer">
+                <img src="${imagePath}" alt="Best output for ${sourceName}" />
+                <span class="rank">#${row.rank}</span>
+              </a>
+              <div class="source-rank-body">
+                <div>
+                  <strong>${sourceName}</strong>
+                  <p class="row-subtitle">Best style: ${row.best_style || "—"}</p>
+                </div>
+                <div class="source-rank-stats">
+                  <span><small>Outputs</small>${row.count || 0}</span>
+                  <span><small>Avg</small>${fmtScore(row.average_score)}</span>
+                  <span><small>Best</small>${fmtScore(row.best_score)}</span>
+                  <span><small>Daily wins</small>${row.daily_wins || 0}</span>
+                  <span><small>Source wins</small>${row.source_wins || 0}</span>
+                </div>
+              </div>
+            </article>
+          `;
+        })
+        .join("")}
+    </div>
+  `;
+}
+
 function renderEvents() {
   const container = document.querySelector("#source-events");
   const rows = (data.events || []).slice(-20).reverse();
@@ -490,6 +539,7 @@ async function init() {
   data.runs = await loadJson("data/runs.json", []);
   data.events = await loadJson("data/source-events.json", []);
   data.styleAnalytics = await loadJson("data/style-analytics.json", {});
+  data.sourceAnalytics = await loadJson("data/source-analytics.json", {});
 
   renderMetrics();
   renderDailyWinner();
@@ -499,6 +549,7 @@ async function init() {
   setupLeaderboardFilters();
   renderLeaderboard();
   renderStyleAnalytics();
+  renderSourceAnalytics();
   renderEvents();
   renderRuns();
 }
