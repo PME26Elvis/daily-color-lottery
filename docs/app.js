@@ -74,6 +74,27 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;");
 }
 
+function rankBadgeHtml(rank, label = "Style rank") {
+  if (rank === null || rank === undefined || rank === "") return "";
+  return `<span class="gallery-badge rank-badge" aria-label="${escapeHtml(label)} ${escapeHtml(rank)}">#${escapeHtml(rank)}</span>`;
+}
+
+function outputBadgesHtml(row, { dailyWinner = false, bestForSource = false, styleRank = null } = {}) {
+  const badges = [];
+  if (dailyWinner) badges.push(`<span class="gallery-badge winner-badge-inline">Daily winner</span>`);
+  if (bestForSource) badges.push(`<span class="gallery-badge source-best-badge">Best for source</span>`);
+  if (styleRank !== null && styleRank !== undefined) badges.push(rankBadgeHtml(styleRank));
+  if (!badges.length) return "";
+  return `<div class="badge-row" aria-label="Output achievements">${badges.join("")}</div>`;
+}
+
+function markDashboardLoaded() {
+  document.body.classList.add("data-loaded");
+  document.querySelectorAll(".panel, .daily-winner, .metric").forEach((element, index) => {
+    element.classList.add("reveal-ready");
+    element.style.setProperty("--reveal-delay", `${Math.min(index * 45, 540)}ms`);
+  });
+}
 
 function paletteColors(row) {
   return Array.isArray(row?.palette) ? row.palette.filter((color) => /^#[0-9a-fA-F]{6}$/.test(color)) : [];
@@ -212,6 +233,7 @@ function renderDailyWinner() {
     container.innerHTML = `
       <div class="daily-winner-empty">
         <span class="winner-badge">Winner of today</span>
+        <span class="winner-medal" aria-label="Daily winner badge">★ Daily winner</span>
         <div>
           <p class="eyebrow">Daily showcase</p>
           <h2>No winning image yet</h2>
@@ -238,6 +260,7 @@ function renderDailyWinner() {
       <div class="winner-copy">
         <p class="eyebrow">Daily showcase</p>
         <h2>${styleName}</h2>
+        ${outputBadgesHtml(bestOutput, { dailyWinner: true, bestForSource: bestOutput.best_for_source_today })}
         <p class="winner-source">${sourceName}</p>
         ${paletteHtml(bestOutput, "Winning output palette")}
         <dl class="winner-stats">
@@ -288,11 +311,13 @@ function renderRevealWinner(output, isFinal = false) {
       <a class="winner-image-link" href="${linkPath}" target="_blank" rel="noreferrer">
         <img src="${imagePath}" alt="Winning output for ${sourceName} in ${styleName} style" />
         <span class="winner-badge">${isFinal ? "Winner of today" : "Revealing…"}</span>
+        <span class="winner-medal" aria-label="${isFinal ? "Daily winner badge" : "Contender badge"}">${isFinal ? "★ Daily winner" : "Scoring…"}</span>
         <span class="winner-gradient" aria-hidden="true"></span>
       </a>
       <div class="winner-copy">
         <p class="eyebrow">${isFinal ? "Daily showcase" : "Scoring contender"}</p>
         <h2>${styleName}</h2>
+        ${outputBadgesHtml(output, { dailyWinner: isFinal, bestForSource: output.best_for_source_today })}
         <p class="winner-source">${sourceName}</p>
         ${paletteHtml(output, "Winning output palette")}
         <dl class="winner-stats">
@@ -439,7 +464,7 @@ function renderToday() {
       const battleLeftOptions = rows.map((row, index) => styleBattleOptionHtml(row, index, 0)).join("");
       const battleRightOptions = rows.map((row, index) => styleBattleOptionHtml(row, index, rows.length > 1 ? 1 : 0)).join("");
       return `
-        <section class="source-block">
+        <section class="source-block gallery-section">
           <div class="source-head">
             <div class="source-title">
               <img src="${sourceThumb}" alt="${source}" onerror="this.style.display='none'" />
@@ -498,7 +523,7 @@ function renderToday() {
             ${rows
               .map(
                 (row) => `
-                <article class="output-card ${row.best_for_source_today ? "best" : ""}">
+                <article class="output-card ${row.best_for_source_today ? "best" : ""}" aria-label="${escapeHtml(row.style || "Generated output")} output for ${escapeHtml(source)}">
                   <div class="comparison" style="--comparison-position: 50%">
                     <img class="comparison-image comparison-image-base" src="${row.source_path || source}" alt="Original ${source}" />
                     <div class="comparison-overlay">
@@ -520,8 +545,9 @@ function renderToday() {
                   <div class="output-body">
                     <div class="output-top">
                       <strong>${row.style}</strong>
-                      <span class="score">${fmtScore(scoreValue(row))}</span>
+                      <span class="score" aria-label="Score ${fmtScore(scoreValue(row))}">${fmtScore(scoreValue(row))}</span>
                     </div>
+                    ${outputBadgesHtml(row, { bestForSource: row.best_for_source_today })}
                     <p class="muted">${row.best_for_source_today ? "Best for this source today" : row.style_description || ""}</p>
                     ${scoreBreakdownHtml(row)}
                     ${paletteHtml(row, `${row.style || "Output"} palette`)}
@@ -556,7 +582,7 @@ function renderLeaderboard() {
       <a class="leader-row" href="${row.output_path}" target="_blank" rel="noreferrer">
         <img src="${row.output_path}" alt="${row.style}" />
         <div>
-          <div class="row-title">#${index + 1} · ${row.style}</div>
+          <div class="row-title">${rankBadgeHtml(index + 1, "Leaderboard rank")} ${row.style}</div>
           <div class="row-subtitle">${row.source_name || row.source_path} · ${row.run_date}</div>
           ${scoreBreakdownHtml(row)}
           ${paletteHtml(row, `${row.style || "Leaderboard output"} palette`)}
@@ -681,6 +707,7 @@ function renderSourceAnalytics() {
               <a class="source-rank-image" href="${linkPath}" target="_blank" rel="noreferrer">
                 <img src="${imagePath}" alt="Best output for ${sourceName}" />
                 <span class="rank">#${row.rank}</span>
+                ${rankBadgeHtml(row.rank, "Source rank")}
               </a>
               <div class="source-rank-body">
                 <div>
@@ -783,6 +810,7 @@ async function init() {
   renderSourceAnalytics();
   renderEvents();
   renderRuns();
+  markDashboardLoaded();
 }
 
 init();
