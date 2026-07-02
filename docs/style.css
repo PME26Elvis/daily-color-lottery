@@ -45,6 +45,7 @@ footer {
 h1,
 h2,
 h3,
+h4,
 p {
   margin: 0;
 }
@@ -60,7 +61,8 @@ h2 {
   letter-spacing: -0.025em;
 }
 
-h3 {
+h3,
+h4 {
   font-size: 1.05rem;
   letter-spacing: -0.02em;
 }
@@ -519,6 +521,98 @@ h3 {
   border: 1px solid var(--border);
 }
 
+.style-battle {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.7fr) minmax(260px, 0.8fr) minmax(360px, 1.2fr);
+  align-items: stretch;
+  gap: 16px;
+  margin-bottom: 18px;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(146, 183, 255, 0.12), rgba(159, 242, 201, 0.06));
+}
+
+.style-battle-copy,
+.battle-controls,
+.battle-panel {
+  min-width: 0;
+}
+
+.style-battle-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.style-battle-copy h4 {
+  margin-bottom: 8px;
+}
+
+.battle-controls {
+  display: grid;
+  align-content: center;
+  gap: 12px;
+}
+
+.battle-controls label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.battle-controls select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel-strong);
+  color: var(--text);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  font: inherit;
+  letter-spacing: normal;
+  padding: 10px 34px 10px 12px;
+  text-transform: none;
+}
+
+.battle-controls select:focus {
+  border-color: var(--accent);
+  outline: 2px solid rgba(146, 183, 255, 0.22);
+  outline-offset: 2px;
+}
+
+.battle-panel {
+  display: grid;
+  gap: 10px;
+}
+
+.battle-comparison {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+}
+
+.battle-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  font-size: 0.78rem;
+}
+
+.battle-links a {
+  color: var(--accent);
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.battle-links a:hover,
+.battle-links a:focus-visible {
+  text-decoration: underline;
+}
+
 .outputs {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -822,6 +916,10 @@ code {
   .style-row {
     grid-template-columns: 1fr 1fr;
   }
+
+  .style-battle {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 720px) {
@@ -874,7 +972,8 @@ code {
   .metrics,
   .outputs,
   .two-column,
-  .style-row {
+  .style-row,
+  .style-battle {
     grid-template-columns: 1fr;
   }
 

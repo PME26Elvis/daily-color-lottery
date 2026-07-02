@@ -311,6 +311,56 @@ function setupWinnerReveal() {
   });
 }
 
+function styleBattleOptionHtml(row, index, selectedIndex = 0) {
+  const styleName = row?.style || `Output ${index + 1}`;
+  const score = fmtScore(scoreValue(row));
+  const imagePath = row?.latest_path || row?.output_path || "";
+  const outputPath = row?.output_path || imagePath;
+  return `
+    <option
+      value="${index}"${index === selectedIndex ? " selected" : ""}
+      data-image="${escapeHtml(imagePath)}"
+      data-output="${escapeHtml(outputPath)}"
+      data-style="${escapeHtml(styleName)}"
+      data-score="${escapeHtml(score)}"
+    >${escapeHtml(styleName)} · ${escapeHtml(score)}</option>
+  `;
+}
+
+function updateBattleComparison(sourceIndex) {
+  const battle = document.querySelector(`[data-battle-index="${sourceIndex}"]`);
+  if (!battle) return;
+
+  const leftOption = battle.querySelector('[data-battle-select="left"]')?.selectedOptions?.[0];
+  const rightOption = battle.querySelector('[data-battle-select="right"]')?.selectedOptions?.[0];
+  const leftImage = battle.querySelector('[data-battle-image="left"]');
+  const rightImage = battle.querySelector('[data-battle-image="right"]');
+  const leftLabel = battle.querySelector('[data-battle-label="left"]');
+  const rightLabel = battle.querySelector('[data-battle-label="right"]');
+  const leftLink = battle.querySelector('[data-battle-link="left"]');
+  const rightLink = battle.querySelector('[data-battle-link="right"]');
+
+  const applyOption = (option, image, label, link, side) => {
+    if (!option || !image || !label) return;
+    const styleName = option.dataset.style || `${side} style`;
+    const imagePath = option.dataset.image || "";
+    const outputPath = option.dataset.output || imagePath;
+    const score = option.dataset.score || "—";
+
+    image.src = imagePath;
+    image.alt = `${side} battle image: ${styleName}`;
+    label.textContent = styleName;
+    label.title = `${styleName} · ${score}`;
+    if (link) {
+      link.href = outputPath;
+      link.textContent = `${styleName} (${score})`;
+    }
+  };
+
+  applyOption(leftOption, leftImage, leftLabel, leftLink, "Left");
+  applyOption(rightOption, rightImage, rightLabel, rightLink, "Right");
+}
+
 function renderToday() {
   const latest = data.latest || {};
   const outputs = latest.outputs || [];
@@ -326,9 +376,13 @@ function renderToday() {
   }
 
   container.innerHTML = bySource(outputs)
-    .map(([source, rows]) => {
+    .map(([source, rows], sourceIndex) => {
       const sourceThumb = source;
       rows.sort((a, b) => Number(a.index || 0) - Number(b.index || 0));
+      const battleLeft = rows[0] || {};
+      const battleRight = rows[1] || rows[0] || {};
+      const battleLeftOptions = rows.map((row, index) => styleBattleOptionHtml(row, index, 0)).join("");
+      const battleRightOptions = rows.map((row, index) => styleBattleOptionHtml(row, index, rows.length > 1 ? 1 : 0)).join("");
       return `
         <section class="source-block">
           <div class="source-head">
@@ -337,6 +391,51 @@ function renderToday() {
               <div>
                 <h3>${source}</h3>
                 <p class="muted">${rows.length} randomized style outputs · original size ${rows[0]?.width || "?"}×${rows[0]?.height || "?"}</p>
+              </div>
+            </div>
+          </div>
+          <div class="style-battle" data-battle-index="${sourceIndex}">
+            <div class="style-battle-copy">
+              <p class="eyebrow">Style battle</p>
+              <h4>Compare generated outputs</h4>
+              <p class="muted">Pick any two styles from this source and drag the slider to compare them head-to-head.</p>
+            </div>
+            <div class="battle-controls" aria-label="Style battle controls for ${escapeHtml(source)}">
+              <label>
+                <span>Left style</span>
+                <select data-battle-select="left" onchange="updateBattleComparison(${sourceIndex})">
+                  ${battleLeftOptions}
+                </select>
+              </label>
+              <label>
+                <span>Right style</span>
+                <select data-battle-select="right" onchange="updateBattleComparison(${sourceIndex})">
+                  ${battleRightOptions}
+                </select>
+              </label>
+            </div>
+            <div class="battle-panel">
+              <div class="comparison battle-comparison" style="--comparison-position: 50%">
+                <img class="comparison-image comparison-image-base" data-battle-image="left" src="${battleLeft.latest_path || battleLeft.output_path || ""}" alt="Left battle image: ${battleLeft.style || "Generated output"}" />
+                <div class="comparison-overlay">
+                  <img class="comparison-image" data-battle-image="right" src="${battleRight.latest_path || battleRight.output_path || ""}" alt="Right battle image: ${battleRight.style || "Generated output"}" />
+                </div>
+                <div class="comparison-label comparison-label-original" data-battle-label="left" title="${battleLeft.style || "Left style"} · ${fmtScore(scoreValue(battleLeft))}">${battleLeft.style || "Left"}</div>
+                <div class="comparison-label comparison-label-graded" data-battle-label="right" title="${battleRight.style || "Right style"} · ${fmtScore(scoreValue(battleRight))}">${battleRight.style || "Right"}</div>
+                <div class="comparison-divider" aria-hidden="true"></div>
+                <input
+                  class="comparison-slider"
+                  type="range"
+                  min="0"
+                  max="100"
+                  value="50"
+                  aria-label="Compare two generated style outputs"
+                  oninput="this.parentElement.style.setProperty('--comparison-position', this.value + '%')"
+                />
+              </div>
+              <div class="battle-links">
+                <a data-battle-link="left" href="${battleLeft.output_path || battleLeft.latest_path || ""}" target="_blank" rel="noreferrer">${battleLeft.style || "Left"} (${fmtScore(scoreValue(battleLeft))})</a>
+                <a data-battle-link="right" href="${battleRight.output_path || battleRight.latest_path || ""}" target="_blank" rel="noreferrer">${battleRight.style || "Right"} (${fmtScore(scoreValue(battleRight))})</a>
               </div>
             </div>
           </div>
