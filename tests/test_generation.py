@@ -29,6 +29,67 @@ def test_grade_image_preserves_size():
     assert out.size == img.size
 
 
+def test_filmic_curve_returns_rgb_same_dimensions():
+    img = Image.new("RGB", (31, 17), (180, 120, 70))
+    out = grade_image(
+        img,
+        {
+            "algorithm": "filmic_curve",
+            "exposure": 0.05,
+            "toe_strength": 0.3,
+            "shoulder_strength": 0.45,
+            "midtone_contrast": 1.12,
+            "highlight_rolloff": 0.6,
+            "rolloff_threshold": 0.72,
+            "black_lift": 0.02,
+            "grain": 0.0,
+        },
+        grain_seed=456,
+    )
+
+    assert out.mode == "RGB"
+    assert out.size == img.size
+
+
+def test_filmic_curve_extreme_inputs_clip_to_valid_rgb_range():
+    img = Image.new("RGB", (3, 1))
+    img.putpixel((0, 0), (0, 0, 0))
+    img.putpixel((1, 0), (255, 255, 255))
+    img.putpixel((2, 0), (255, 0, 128))
+
+    out = grade_image(
+        img,
+        {
+            "algorithm": "filmic_curve",
+            "exposure": 8.0,
+            "brightness": 2.0,
+            "saturation": 3.0,
+            "vibrance": 2.0,
+            "temperature": 0.8,
+            "tint": -0.8,
+            "shadows": 1.0,
+            "highlights": 1.0,
+            "gamma": 0.2,
+            "fade": 0.2,
+            "vignette": 0.0,
+            "grain": 0.0,
+            "toe_strength": 1.0,
+            "shoulder_strength": 1.0,
+            "midtone_contrast": 2.5,
+            "highlight_rolloff": 1.0,
+            "rolloff_threshold": 0.55,
+            "black_lift": 0.2,
+        },
+        grain_seed=789,
+    )
+
+    assert out.mode == "RGB"
+    assert out.size == img.size
+    for channel_min, channel_max in out.getextrema():
+        assert 0 <= channel_min <= 255
+        assert 0 <= channel_max <= 255
+
+
 def test_score_image_range():
     img = Image.new("RGB", (32, 32), (128, 128, 128))
     score = score_image(img)

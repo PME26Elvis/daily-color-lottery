@@ -124,17 +124,103 @@ def apply_grain(arr: np.ndarray, value: float, seed: int) -> np.ndarray:
     return arr + noise
 
 
-def grade_image(img: Image.Image, params: dict[str, float], grain_seed: int) -> Image.Image:
+def _param(params: dict[str, object], key: str, default: float) -> float:
+    return float(params.get(key, default))
+
+
+def apply_filmic_toe_shoulder(
+    arr: np.ndarray, toe_strength: float, shoulder_strength: float
+) -> np.ndarray:
+    """Compress shadows/highlights with a smooth filmic S-curve."""
+    toe_strength = max(float(toe_strength), 0.0)
+    shoulder_strength = max(float(shoulder_strength), 0.0)
+    safe = np.clip(arr, 0.0, None)
+    toe_gamma = 1.0 + toe_strength
+    shoulder = 1.0 + shoulder_strength * 4.0
+    toe = np.power(safe, toe_gamma)
+    return toe / (toe + np.power(np.clip(1.0 - safe, 0.0, None), shoulder) + 1e-6)
+
+
+def apply_midtone_contrast(arr: np.ndarray, value: float, pivot: float = 0.5) -> np.ndarray:
+    """Adjust contrast most strongly around the midtones."""
+    value = float(value)
+    pivot = float(pivot)
+    contrast = (arr - pivot) * value + pivot
+    mid_mask = 1.0 - np.clip(np.abs(arr - pivot) / max(pivot, 1.0 - pivot), 0.0, 1.0)
+    return arr + (contrast - arr) * mid_mask
+
+
+def apply_highlight_rolloff(arr: np.ndarray, value: float, threshold: float = 0.72) -> np.ndarray:
+    """Roll values above ``threshold`` toward white instead of clipping harshly."""
+    value = max(float(value), 0.0)
+    threshold = float(np.clip(threshold, 0.0, 0.98))
+    if value <= 0:
+        return arr
+    headroom = 1.0 - threshold
+    highlights = np.clip((arr - threshold) / headroom, 0.0, None)
+    compressed = threshold + headroom * (1.0 - np.exp(-highlights * (1.0 + value * 3.0)))
+    blend = np.clip(highlights, 0.0, 1.0)
+    return arr * (1.0 - blend) + compressed * blend
+
+
+def apply_black_lift(arr: np.ndarray, value: float) -> np.ndarray:
+    value = max(float(value), 0.0)
+    if value <= 0:
+        return arr
+    shadow_weight = np.clip(1.0 - arr / 0.5, 0.0, 1.0)
+    return arr + value * shadow_weight
+
+
+def grade_image_classic(img: Image.Image, params: dict[str, object], grain_seed: int) -> Image.Image:
     arr = to_array(img)
-    arr = apply_exposure(arr, params.get("exposure", 0.0))
-    arr = apply_brightness(arr, params.get("brightness", 0.0))
-    arr = apply_contrast(arr, params.get("contrast", 1.0))
-    arr = apply_temperature_tint(arr, params.get("temperature", 0.0), params.get("tint", 0.0))
-    arr = apply_shadows_highlights(arr, params.get("shadows", 0.0), params.get("highlights", 0.0))
-    arr = apply_saturation(arr, params.get("saturation", 1.0))
-    arr = apply_vibrance(arr, params.get("vibrance", 0.0))
-    arr = apply_gamma(arr, params.get("gamma", 1.0))
-    arr = apply_fade(arr, params.get("fade", 0.0))
-    arr = apply_vignette(arr, params.get("vignette", 0.0))
-    arr = apply_grain(arr, params.get("grain", 0.0), grain_seed)
+    arr = apply_exposure(arr, _param(params, "exposure", 0.0))
+    arr = apply_brightness(arr, _param(params, "brightness", 0.0))
+    arr = apply_contrast(arr, _param(params, "contrast", 1.0))
+    arr = apply_temperature_tint(arr, _param(params, "temperature", 0.0), _param(params, "tint", 0.0))
+    arr = apply_shadows_highlights(arr, _param(params, "shadows", 0.0), _param(params, "highlights", 0.0))
+    arr = apply_saturation(arr, _param(params, "saturation", 1.0))
+    arr = apply_vibrance(arr, _param(params, "vibrance", 0.0))
+    arr = apply_gamma(arr, _param(params, "gamma", 1.0))
+    arr = apply_fade(arr, _param(params, "fade", 0.0))
+    arr = apply_vignette(arr, _param(params, "vignette", 0.0))
+    arr = apply_grain(arr, _param(params, "grain", 0.0), grain_seed)
     return to_image(arr)
+
+
+def grade_image_filmic_curve(img: Image.Image, params: dict[str, object], grain_seed: int) -> Image.Image:
+    arr = to_array(img)
+    arr = apply_exposure(arr, _param(params, "exposure", 0.0))
+    arr = apply_temperature_tint(arr, _param(params, "temperature", 0.0), _param(params, "tint", 0.0))
+    arr = apply_black_lift(arr, _param(params, "black_lift", 0.0))
+    arr = apply_filmic_toe_shoulder(
+        arr, _param(params, "toe_strength", 0.25), _param(params, "shoulder_strength", 0.35)
+    )
+    arr = apply_midtone_contrast(arr, _param(params, "midtone_contrast", 1.08))
+    arr = apply_highlight_rolloff(
+        arr, _param(params, "highlight_rolloff", 0.45), _param(params, "rolloff_threshold", 0.72)
+    )
+    arr = apply_brightness(arr, _param(params, "brightness", 0.0))
+    arr = apply_shadows_highlights(arr, _param(params, "shadows", 0.0), _param(params, "highlights", 0.0))
+    arr = apply_saturation(arr, _param(params, "saturation", 1.0))
+    arr = apply_vibrance(arr, _param(params, "vibrance", 0.0))
+    arr = apply_gamma(arr, _param(params, "gamma", 1.0))
+    arr = apply_fade(arr, _param(params, "fade", 0.0))
+    arr = apply_vignette(arr, _param(params, "vignette", 0.0))
+    arr = apply_grain(arr, _param(params, "grain", 0.0), grain_seed)
+    return to_image(arr)
+
+
+GRADING_ALGORITHMS = {
+    "classic": grade_image_classic,
+    "filmic_curve": grade_image_filmic_curve,
+}
+
+
+def grade_image(img: Image.Image, params: dict[str, object], grain_seed: int) -> Image.Image:
+    algorithm = str(params.get("algorithm", "classic"))
+    try:
+        grade = GRADING_ALGORITHMS[algorithm]
+    except KeyError as exc:
+        available = ", ".join(sorted(GRADING_ALGORITHMS))
+        raise ValueError(f"Unknown grading algorithm {algorithm!r}; expected one of: {available}") from exc
+    return grade(img, params, grain_seed)

@@ -302,6 +302,85 @@
           0.018
         ]
       }
+    },
+    {
+      "name": "filmic_soft_rolloff",
+      "description": "Filmic toe and shoulder curve with lifted blacks and gentle highlight rolloff.",
+      "algorithm": "filmic_curve",
+      "ranges": {
+        "exposure": [
+          -0.08,
+          0.18
+        ],
+        "brightness": [
+          -0.02,
+          0.03
+        ],
+        "saturation": [
+          0.88,
+          1.12
+        ],
+        "vibrance": [
+          0.04,
+          0.22
+        ],
+        "temperature": [
+          -0.04,
+          0.1
+        ],
+        "tint": [
+          -0.03,
+          0.04
+        ],
+        "shadows": [
+          -0.04,
+          0.08
+        ],
+        "highlights": [
+          -0.12,
+          0.02
+        ],
+        "gamma": [
+          0.94,
+          1.06
+        ],
+        "fade": [
+          0.0,
+          0.06
+        ],
+        "vignette": [
+          0.04,
+          0.2
+        ],
+        "grain": [
+          0.004,
+          0.028
+        ],
+        "toe_strength": [
+          0.18,
+          0.42
+        ],
+        "shoulder_strength": [
+          0.28,
+          0.62
+        ],
+        "midtone_contrast": [
+          1.04,
+          1.22
+        ],
+        "highlight_rolloff": [
+          0.35,
+          0.75
+        ],
+        "rolloff_threshold": [
+          0.68,
+          0.78
+        ],
+        "black_lift": [
+          0.0,
+          0.045
+        ]
+      }
     }
   ],
   "scoring": {

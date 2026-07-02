@@ -255,6 +255,8 @@ def main() -> int:
         for index, style in enumerate(styles[: int(config["run"].get("outputs_per_source", 5))], start=1):
             style_name = style["name"]
             params = sample_ranges(style["ranges"])
+            if style.get("algorithm"):
+                params["algorithm"] = style["algorithm"]
             seed = numpy_seed()
             try:
                 out_img = grade_image(original, params, seed)
@@ -275,7 +277,10 @@ def main() -> int:
                     "style": style_name,
                     "style_description": style.get("description", ""),
                     "index": index,
-                    "params": {k: round(float(v), 6) for k, v in params.items()},
+                    "params": {
+                        k: round(float(v), 6) if isinstance(v, (int, float)) else v
+                        for k, v in params.items()
+                    },
                     "grain_seed_hex": hex(seed),
                     "output_path": rel(archive_path, root),
                     "latest_path": rel(latest_path, root),
