@@ -4,6 +4,7 @@ const data = {
   runs: [],
   events: [],
   styleAnalytics: {},
+  sourceAnalytics: {},
 };
 
 const leaderboardFilters = {
@@ -71,6 +72,27 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;");
+}
+
+
+function paletteColors(row) {
+  return Array.isArray(row?.palette) ? row.palette.filter((color) => /^#[0-9a-fA-F]{6}$/.test(color)) : [];
+}
+
+function paletteHtml(row, label = "Dominant palette") {
+  const colors = paletteColors(row);
+  if (!colors.length) return "";
+  return `
+    <div class="palette" aria-label="${escapeHtml(label)}">
+      ${colors
+        .map((color, index) => {
+          const safeColor = escapeHtml(color);
+          const chipLabel = `${label} color ${index + 1}: ${color}`;
+          return `<span class="palette-chip" style="--chip-color: ${safeColor}" title="${escapeHtml(chipLabel)}"><span class="sr-only">${escapeHtml(chipLabel)}</span></span>`;
+        })
+        .join("")}
+    </div>
+  `;
 }
 
 function optionHtml(value, label) {
@@ -217,6 +239,7 @@ function renderDailyWinner() {
         <p class="eyebrow">Daily showcase</p>
         <h2>${styleName}</h2>
         <p class="winner-source">${sourceName}</p>
+        ${paletteHtml(bestOutput, "Winning output palette")}
         <dl class="winner-stats">
           <div>
             <dt>Score</dt>
@@ -271,6 +294,7 @@ function renderRevealWinner(output, isFinal = false) {
         <p class="eyebrow">${isFinal ? "Daily showcase" : "Scoring contender"}</p>
         <h2>${styleName}</h2>
         <p class="winner-source">${sourceName}</p>
+        ${paletteHtml(output, "Winning output palette")}
         <dl class="winner-stats">
           <div class="score-pulse">
             <dt>Score</dt>
@@ -500,6 +524,7 @@ function renderToday() {
                     </div>
                     <p class="muted">${row.best_for_source_today ? "Best for this source today" : row.style_description || ""}</p>
                     ${scoreBreakdownHtml(row)}
+                    ${paletteHtml(row, `${row.style || "Output"} palette`)}
                     <a class="full-image-link" href="${row.output_path}" target="_blank" rel="noreferrer">Open full image</a>
                     <pre class="params">${paramLines(row.params)}</pre>
                   </div>
@@ -534,6 +559,7 @@ function renderLeaderboard() {
           <div class="row-title">#${index + 1} · ${row.style}</div>
           <div class="row-subtitle">${row.source_name || row.source_path} · ${row.run_date}</div>
           ${scoreBreakdownHtml(row)}
+          ${paletteHtml(row, `${row.style || "Leaderboard output"} palette`)}
         </div>
         <strong class="score">${fmtScore(scoreValue(row))}</strong>
       </a>
@@ -629,6 +655,54 @@ function renderSourceEvent(event) {
   `;
 }
 
+function renderSourceAnalytics() {
+  const container = document.querySelector("#source-analytics");
+  const summary = data.sourceAnalytics || {};
+  const rows = (summary.sources || []).slice(0, 12);
+  if (!container) return;
+  if (!rows.length) {
+    container.innerHTML = `<div class="empty">No source analytics yet. Generate a run to build source rankings.</div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="analytics-summary muted">
+      ${summary.output_count || 0} scored outputs across ${summary.run_count || 0} runs · latest run ${summary.latest_run_date || "—"}
+    </div>
+    <div class="source-rankings">
+      ${rows
+        .map((row) => {
+          const bestOutput = row.best_output || {};
+          const imagePath = bestOutput.latest_path || bestOutput.output_path || row.source_path || "";
+          const linkPath = bestOutput.output_path || imagePath;
+          const sourceName = row.source_name || row.source_path || row.source_sha256 || "Unknown source";
+          return `
+            <article class="source-rank-card">
+              <a class="source-rank-image" href="${linkPath}" target="_blank" rel="noreferrer">
+                <img src="${imagePath}" alt="Best output for ${sourceName}" />
+                <span class="rank">#${row.rank}</span>
+              </a>
+              <div class="source-rank-body">
+                <div>
+                  <strong>${sourceName}</strong>
+                  <p class="row-subtitle">Best style: ${row.best_style || "—"}</p>
+                </div>
+                <div class="source-rank-stats">
+                  <span><small>Outputs</small>${row.count || 0}</span>
+                  <span><small>Avg</small>${fmtScore(row.average_score)}</span>
+                  <span><small>Best</small>${fmtScore(row.best_score)}</span>
+                  <span><small>Daily wins</small>${row.daily_wins || 0}</span>
+                  <span><small>Source wins</small>${row.source_wins || 0}</span>
+                </div>
+              </div>
+            </article>
+          `;
+        })
+        .join("")}
+    </div>
+  `;
+}
+
 function renderEvents() {
   const container = document.querySelector("#source-events");
   const rows = data.events || [];
@@ -696,6 +770,7 @@ async function init() {
   data.runs = await loadJson("data/runs.json", []);
   data.events = await loadJson("data/source-events.json", []);
   data.styleAnalytics = await loadJson("data/style-analytics.json", {});
+  data.sourceAnalytics = await loadJson("data/source-analytics.json", {});
 
   renderMetrics();
   renderDailyWinner();
@@ -705,6 +780,7 @@ async function init() {
   setupLeaderboardFilters();
   renderLeaderboard();
   renderStyleAnalytics();
+  renderSourceAnalytics();
   renderEvents();
   renderRuns();
 }
