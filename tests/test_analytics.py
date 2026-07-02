@@ -1,15 +1,18 @@
 
-from src.analytics import build_style_analytics, read_compacted_runs, write_style_analytics
+from src.analytics import build_source_analytics, build_style_analytics, read_compacted_runs, write_style_analytics
 from src.utils import append_jsonl
 
 
-def output(style, score, run_date, path, source_win=False):
+def output(style, score, run_date, path, source_win=False, source_path="sources/a.png", source_sha256="sha-a", source_name="a.png"):
     return {
         "style": style,
         "run_date": run_date,
         "output_path": path,
         "score": {"score": score},
         "best_for_source_today": source_win,
+        "source_path": source_path,
+        "source_sha256": source_sha256,
+        "source_name": source_name,
     }
 
 
@@ -64,3 +67,62 @@ def test_read_and_write_style_analytics_uses_compacted_runs(tmp_path):
     assert analytics["styles"][0]["style"] == "new"
     assert (logs_dir / "style_analytics.json").exists()
     assert (docs_data_dir / "style-analytics.json").exists()
+    assert (logs_dir / "source_analytics.json").exists()
+    assert (docs_data_dir / "source-analytics.json").exists()
+
+
+def test_build_source_analytics_groups_by_path_and_scores_wins():
+    runs = [
+        {
+            "run_id": "run-1",
+            "run_date": "2026-06-20",
+            "best_output": {"output_path": "a-warm"},
+            "outputs": [
+                output("warm", 90, "2026-06-20", "a-warm", source_win=True, source_path="sources/a.png", source_name="a.png"),
+                output("cool", 70, "2026-06-20", "a-cool", source_path="sources/a.png", source_name="a.png"),
+                output("warm", 95, "2026-06-20", "b-warm", source_win=True, source_path="sources/b.png", source_name="b.png"),
+            ],
+        },
+        {
+            "run_id": "run-2",
+            "run_date": "2026-06-21",
+            "best_output": {"output_path": "b-cool"},
+            "outputs": [
+                output("cool", 100, "2026-06-21", "b-cool", source_win=True, source_path="sources/b.png", source_name="b.png"),
+                output("warm", 50, "2026-06-21", "a-warm-2", source_win=True, source_path="sources/a.png", source_name="a.png"),
+                {"style": "ignored", "score": None, "source_path": "sources/a.png", "output_path": "ignored"},
+            ],
+        },
+    ]
+
+    analytics = build_source_analytics(runs)
+
+    by_source = {row["source_key"]: row for row in analytics["sources"]}
+    assert analytics["run_count"] == 2
+    assert analytics["output_count"] == 5
+    assert analytics["latest_run_date"] == "2026-06-21"
+    assert by_source["sources/a.png"]["count"] == 3
+    assert by_source["sources/a.png"]["average_score"] == 70.0
+    assert by_source["sources/a.png"]["best_score"] == 90.0
+    assert by_source["sources/a.png"]["daily_wins"] == 1
+    assert by_source["sources/a.png"]["source_wins"] == 2
+    assert by_source["sources/a.png"]["best_style"] == "warm"
+    assert by_source["sources/b.png"]["rank"] == 1
+
+
+def test_build_source_analytics_falls_back_to_sha_for_missing_path():
+    runs = [
+        {
+            "run_date": "2026-06-20",
+            "best_output": {"output_path": "sha-output"},
+            "outputs": [
+                output("warm", 88, "2026-06-20", "sha-output", source_path=None, source_sha256="abc123", source_name=None),
+            ],
+        }
+    ]
+
+    analytics = build_source_analytics(runs)
+
+    assert analytics["sources"][0]["source_key"] == "abc123"
+    assert analytics["sources"][0]["source_sha256"] == "abc123"
+    assert analytics["sources"][0]["daily_wins"] == 1

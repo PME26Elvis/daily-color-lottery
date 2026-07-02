@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from src.grading import score_image
-from src.image_ops import grade_image, open_rgb
+from src.image_ops import dominant_palette_hex, grade_image, open_rgb
 from src.randomness import numpy_seed, random_metadata, sample_ranges
 from src.analytics import write_style_analytics
 from src.source_tracking import build_inventory, diff_inventory, merge_inventory
@@ -259,6 +259,7 @@ def main() -> int:
             try:
                 out_img = grade_image(original, params, seed)
                 score = score_image(out_img, weights)
+                palette = dominant_palette_hex(out_img)
                 filename = f"{run_id}_{index:02d}_{style_name}.jpg"
                 archive_path = source_archive_dir / filename
                 latest_path = source_latest_dir / f"{index:02d}_{style_name}.jpg"
@@ -279,6 +280,7 @@ def main() -> int:
                     "output_path": rel(archive_path, root),
                     "latest_path": rel(latest_path, root),
                     "score": score,
+                    "palette": palette,
                     "width": original.width,
                     "height": original.height,
                 }

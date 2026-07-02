@@ -18,6 +18,37 @@ def to_image(arr: np.ndarray) -> Image.Image:
     return Image.fromarray((arr * 255.0 + 0.5).astype(np.uint8), mode="RGB")
 
 
+def dominant_palette_hex(img: Image.Image, colors: int = 5, sample_size: int = 96) -> list[str]:
+    """Return up to ``colors`` dominant image colors as uppercase hex strings.
+
+    The image is copied, converted to RGB, and downsampled before quantization so
+    palette extraction stays inexpensive for large generated outputs.
+    """
+    if colors <= 0:
+        return []
+
+    sample = img.convert("RGB")
+    sample.thumbnail((sample_size, sample_size), Image.Resampling.LANCZOS)
+    quantized = sample.quantize(colors=colors, method=Image.Quantize.MEDIANCUT)
+    palette = quantized.getpalette() or []
+    color_counts = quantized.getcolors(maxcolors=sample.width * sample.height) or []
+    ranked_indexes = [index for _count, index in sorted(color_counts, reverse=True)]
+
+    result = []
+    for index in ranked_indexes:
+        offset = index * 3
+        rgb = palette[offset : offset + 3]
+        if len(rgb) != 3:
+            continue
+        hex_color = "#{:02X}{:02X}{:02X}".format(*rgb)
+        if hex_color not in result:
+            result.append(hex_color)
+        if len(result) >= colors:
+            break
+
+    return result
+
+
 def luminance(arr: np.ndarray) -> np.ndarray:
     return arr[..., 0] * 0.2126 + arr[..., 1] * 0.7152 + arr[..., 2] * 0.0722
 
