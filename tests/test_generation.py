@@ -4,7 +4,7 @@ from PIL import Image
 
 from src.generate import load_replay_record, replay_outputs
 from src.grading import score_image
-from src.image_ops import dominant_palette_hex, grade_image
+from src.image_ops import dominant_palette_hex, grade_image, grade_image_with_algorithm
 from src.utils import append_jsonl, read_json
 
 
@@ -27,6 +27,28 @@ def test_grade_image_preserves_size():
     }
     out = grade_image(img, params, grain_seed=123)
     assert out.size == img.size
+
+
+def test_grade_image_with_algorithm_defaults_to_classic():
+    img = Image.new("RGB", (16, 16), (120, 80, 40))
+    params = {"contrast": 1.1, "saturation": 1.05, "grain": 0.0}
+
+    default = grade_image(img, params, grain_seed=123)
+    explicit = grade_image_with_algorithm(img, params, grain_seed=123, algorithm="classic")
+
+    assert default.tobytes() == explicit.tobytes()
+
+
+def test_grade_image_with_algorithm_rejects_unknown_algorithm():
+    img = Image.new("RGB", (16, 16), (120, 80, 40))
+
+    try:
+        grade_image_with_algorithm(img, {}, grain_seed=123, algorithm="unknown")
+    except ValueError as exc:
+        assert "Unknown grading algorithm 'unknown'" in str(exc)
+        assert "classic" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for unknown grading algorithm")
 
 
 def test_score_image_range():
@@ -111,6 +133,7 @@ def test_replay_outputs_use_replay_metadata_and_paths(tmp_path):
     output = summary["outputs"][0]
     assert output["mode"] == "replay"
     assert output["grain_seed_hex"] == "0x7b"
+    assert output["algorithm"] == "classic"
     assert output["params"] == record["outputs"][0]["params"]
     assert output["latest_path"] is None
     assert output["output_path"] == (

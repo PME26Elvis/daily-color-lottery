@@ -69,7 +69,8 @@
           0.0,
           0.025
         ]
-      }
+      },
+      "algorithm": "classic"
     },
     {
       "name": "moody_blue",
@@ -127,7 +128,8 @@
           0.0,
           0.025
         ]
-      }
+      },
+      "algorithm": "classic"
     },
     {
       "name": "film_faded",
@@ -185,7 +187,8 @@
           0.012,
           0.045
         ]
-      }
+      },
+      "algorithm": "classic"
     },
     {
       "name": "clean_bright",
@@ -243,7 +246,8 @@
           0.0,
           0.012
         ]
-      }
+      },
+      "algorithm": "classic"
     },
     {
       "name": "high_contrast_pop",
@@ -301,7 +305,8 @@
           0.0,
           0.018
         ]
-      }
+      },
+      "algorithm": "classic"
     }
   ],
   "scoring": {

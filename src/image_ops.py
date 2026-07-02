@@ -124,7 +124,7 @@ def apply_grain(arr: np.ndarray, value: float, seed: int) -> np.ndarray:
     return arr + noise
 
 
-def grade_image(img: Image.Image, params: dict[str, float], grain_seed: int) -> Image.Image:
+def grade_classic(img: Image.Image, params: dict[str, float], grain_seed: int) -> Image.Image:
     arr = to_array(img)
     arr = apply_exposure(arr, params.get("exposure", 0.0))
     arr = apply_brightness(arr, params.get("brightness", 0.0))
@@ -138,3 +138,26 @@ def grade_image(img: Image.Image, params: dict[str, float], grain_seed: int) -> 
     arr = apply_vignette(arr, params.get("vignette", 0.0))
     arr = apply_grain(arr, params.get("grain", 0.0), grain_seed)
     return to_image(arr)
+
+
+GRADING_ALGORITHMS = {"classic": grade_classic}
+
+
+def grade_image_with_algorithm(
+    img: Image.Image,
+    params: dict[str, float],
+    grain_seed: int,
+    algorithm: str = "classic",
+) -> Image.Image:
+    try:
+        grade = GRADING_ALGORITHMS[algorithm]
+    except KeyError as exc:
+        available = ", ".join(sorted(GRADING_ALGORITHMS))
+        raise ValueError(
+            f"Unknown grading algorithm {algorithm!r}. Available algorithms: {available}"
+        ) from exc
+    return grade(img, params, grain_seed)
+
+
+def grade_image(img: Image.Image, params: dict[str, float], grain_seed: int) -> Image.Image:
+    return grade_image_with_algorithm(img, params, grain_seed, algorithm="classic")

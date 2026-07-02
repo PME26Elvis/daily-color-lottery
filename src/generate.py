@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from src.grading import score_image
-from src.image_ops import dominant_palette_hex, grade_image, open_rgb
+from src.image_ops import dominant_palette_hex, grade_image_with_algorithm, open_rgb
 from src.randomness import numpy_seed, random_metadata, sample_ranges
 from src.analytics import write_style_analytics
 from src.source_tracking import build_inventory, diff_inventory, merge_inventory
@@ -135,7 +135,10 @@ def replay_outputs(
         try:
             original = open_rgb(source_path)
             seed = int(str(grain_seed_hex), 16)
-            out_img = grade_image(original, params, seed)
+            algorithm_name = str(row.get("algorithm") or "classic")
+            out_img = grade_image_with_algorithm(
+                original, params, seed, algorithm=algorithm_name
+            )
             score = score_image(out_img, weights)
             output_index = int(row.get("index") or index)
             filename = f"{original_run_id}_{output_index:02d}_{style_name}.jpg"
@@ -145,6 +148,7 @@ def replay_outputs(
             replay_row.update(
                 {
                     "mode": "replay",
+                    "algorithm": algorithm_name,
                     "replay_of_run_id": original_run_id,
                     "output_path": rel(output_path, root),
                     "latest_path": None,
@@ -252,12 +256,17 @@ def main() -> int:
             continue
 
         source_outputs = []
-        for index, style in enumerate(styles[: int(config["run"].get("outputs_per_source", 5))], start=1):
+        for index, style in enumerate(
+            styles[: int(config["run"].get("outputs_per_source", 5))], start=1
+        ):
             style_name = style["name"]
             params = sample_ranges(style["ranges"])
+            algorithm_name = str(style.get("algorithm") or "classic")
             seed = numpy_seed()
             try:
-                out_img = grade_image(original, params, seed)
+                out_img = grade_image_with_algorithm(
+                    original, params, seed, algorithm=algorithm_name
+                )
                 score = score_image(out_img, weights)
                 palette = dominant_palette_hex(out_img)
                 filename = f"{run_id}_{index:02d}_{style_name}.jpg"
@@ -274,6 +283,7 @@ def main() -> int:
                     "source_sha256": current_inventory.get(source_rel, {}).get("sha256"),
                     "style": style_name,
                     "style_description": style.get("description", ""),
+                    "algorithm": algorithm_name,
                     "index": index,
                     "params": {k: round(float(v), 6) for k, v in params.items()},
                     "grain_seed_hex": hex(seed),
