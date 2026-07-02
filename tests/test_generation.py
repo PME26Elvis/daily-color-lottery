@@ -163,3 +163,48 @@ def test_dominant_palette_hex_limits_to_five_colors():
 
     assert len(palette) == 5
     assert all(color.startswith("#") and len(color) == 7 for color in palette)
+
+
+def test_apply_split_tone_neutral_strength_returns_original_array():
+    from src.image_ops import apply_split_tone, to_array
+
+    img = Image.new("RGB", (4, 2), (80, 120, 160))
+    arr = to_array(img)
+
+    out = apply_split_tone(arr, "#008080", "#FFAA00", strength=0.0, balance=0.0)
+
+    assert out.shape == arr.shape
+    assert (out == arr).all()
+
+
+def test_apply_split_tone_strongly_tints_shadows_and_highlights():
+    import numpy as np
+
+    from src.image_ops import apply_split_tone
+
+    arr = np.array([[[0.05, 0.05, 0.05], [0.95, 0.95, 0.95]]], dtype=np.float32)
+
+    out = apply_split_tone(arr, "#008080", "#FF8000", strength=1.0, balance=0.0)
+
+    shadow_pixel = out[0, 0]
+    highlight_pixel = out[0, 1]
+    assert shadow_pixel[1] > shadow_pixel[0]
+    assert shadow_pixel[2] > shadow_pixel[0]
+    assert highlight_pixel[0] > highlight_pixel[1]
+    assert highlight_pixel[1] > highlight_pixel[2]
+
+
+def test_split_tone_grade_preserves_dimensions_and_rgb_mode():
+    img = Image.new("RGB", (13, 7), (128, 128, 128))
+    params = {
+        "shadow_tone": [0, 128, 128],
+        "highlight_tone": [255, 160, 64],
+        "split_strength": 0.65,
+        "split_balance": 0.1,
+        "grain": 0.0,
+    }
+
+    out = grade_image(img, params, grain_seed=123)
+
+    assert out.size == img.size
+    assert out.mode == "RGB"

@@ -302,6 +302,142 @@
           0.018
         ]
       }
+    },
+    {
+      "name": "teal_orange_split",
+      "description": "Cinematic teal shadows and warm orange highlights using split toning.",
+      "ranges": {
+        "exposure": [
+          -0.08,
+          0.18
+        ],
+        "brightness": [
+          -0.02,
+          0.03
+        ],
+        "contrast": [
+          1.05,
+          1.28
+        ],
+        "saturation": [
+          0.9,
+          1.18
+        ],
+        "vibrance": [
+          0.08,
+          0.28
+        ],
+        "temperature": [
+          -0.02,
+          0.08
+        ],
+        "tint": [
+          -0.03,
+          0.03
+        ],
+        "shadows": [
+          -0.08,
+          0.03
+        ],
+        "highlights": [
+          -0.08,
+          0.04
+        ],
+        "shadow_tone": "#0A7C86",
+        "highlight_tone": "#FFAA4D",
+        "split_strength": [
+          0.18,
+          0.38
+        ],
+        "split_balance": [
+          -0.12,
+          0.16
+        ],
+        "gamma": [
+          0.9,
+          1.04
+        ],
+        "fade": [
+          0.0,
+          0.04
+        ],
+        "vignette": [
+          0.06,
+          0.22
+        ],
+        "grain": [
+          0.0,
+          0.02
+        ]
+      }
+    },
+    {
+      "name": "pastel_duotone",
+      "description": "Soft lavender shadows and peach highlights for a gentle pastel duotone grade.",
+      "ranges": {
+        "exposure": [
+          0.0,
+          0.2
+        ],
+        "brightness": [
+          0.0,
+          0.05
+        ],
+        "contrast": [
+          0.86,
+          1.08
+        ],
+        "saturation": [
+          0.78,
+          1.02
+        ],
+        "vibrance": [
+          0.04,
+          0.18
+        ],
+        "temperature": [
+          0.0,
+          0.1
+        ],
+        "tint": [
+          0.0,
+          0.06
+        ],
+        "shadows": [
+          0.0,
+          0.1
+        ],
+        "highlights": [
+          -0.06,
+          0.04
+        ],
+        "shadow_tone": "#8A7DFF",
+        "highlight_tone": "#FFD1A6",
+        "split_strength": [
+          0.12,
+          0.28
+        ],
+        "split_balance": [
+          -0.08,
+          0.12
+        ],
+        "gamma": [
+          0.94,
+          1.08
+        ],
+        "fade": [
+          0.04,
+          0.12
+        ],
+        "vignette": [
+          0.0,
+          0.12
+        ],
+        "grain": [
+          0.0,
+          0.018
+        ]
+      }
     }
   ],
   "scoring": {

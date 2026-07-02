@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 from PIL import Image
 
@@ -96,6 +98,50 @@ def apply_shadows_highlights(arr: np.ndarray, shadows: float, highlights: float)
     return arr + shadow_mask * shadows + highlight_mask * highlights
 
 
+def _tone_to_rgb(tone: Any) -> np.ndarray:
+    if isinstance(tone, str):
+        value = tone.lstrip("#")
+        if len(value) != 6:
+            raise ValueError("Tone hex colors must use RRGGBB format")
+        return np.array([int(value[i : i + 2], 16) for i in (0, 2, 4)], dtype=np.float32) / 255.0
+
+    rgb = np.asarray(tone, dtype=np.float32)
+    if rgb.shape != (3,):
+        raise ValueError("Tone colors must contain exactly three RGB channels")
+    if np.any(rgb > 1.0):
+        rgb = rgb / 255.0
+    return np.clip(rgb, 0.0, 1.0)
+
+
+def apply_split_tone(
+    arr: np.ndarray,
+    shadow_color: Any,
+    highlight_color: Any,
+    strength: float,
+    balance: float,
+) -> np.ndarray:
+    """Tint shadows and highlights with smooth luminance-weighted masks.
+
+    ``balance`` shifts the split point lower or higher: negative values give
+    more room to highlights, while positive values give more room to shadows.
+    """
+    strength = float(np.clip(strength, 0.0, 1.0))
+    if strength <= 0.0:
+        return arr
+
+    split_point = 0.5 + float(np.clip(balance, -1.0, 1.0)) * 0.25
+    y = np.clip(luminance(arr), 0.0, 1.0)
+    shadow_mask = np.clip((split_point - y) / max(split_point, 1e-6), 0.0, 1.0) ** 1.5
+    highlight_mask = np.clip((y - split_point) / max(1.0 - split_point, 1e-6), 0.0, 1.0) ** 1.5
+
+    shadow_rgb = _tone_to_rgb(shadow_color)
+    highlight_rgb = _tone_to_rgb(highlight_color)
+    toned = arr.copy()
+    toned += (shadow_rgb - toned) * (shadow_mask[..., None] * strength)
+    toned += (highlight_rgb - toned) * (highlight_mask[..., None] * strength)
+    return toned
+
+
 def apply_gamma(arr: np.ndarray, gamma: float) -> np.ndarray:
     gamma = max(gamma, 0.05)
     return np.power(np.clip(arr, 0.0, 1.0), gamma)
@@ -124,13 +170,20 @@ def apply_grain(arr: np.ndarray, value: float, seed: int) -> np.ndarray:
     return arr + noise
 
 
-def grade_image(img: Image.Image, params: dict[str, float], grain_seed: int) -> Image.Image:
+def grade_image(img: Image.Image, params: dict[str, Any], grain_seed: int) -> Image.Image:
     arr = to_array(img)
     arr = apply_exposure(arr, params.get("exposure", 0.0))
     arr = apply_brightness(arr, params.get("brightness", 0.0))
     arr = apply_contrast(arr, params.get("contrast", 1.0))
     arr = apply_temperature_tint(arr, params.get("temperature", 0.0), params.get("tint", 0.0))
     arr = apply_shadows_highlights(arr, params.get("shadows", 0.0), params.get("highlights", 0.0))
+    arr = apply_split_tone(
+        arr,
+        params.get("shadow_tone", [0.0, 0.0, 0.0]),
+        params.get("highlight_tone", [1.0, 1.0, 1.0]),
+        params.get("split_strength", 0.0),
+        params.get("split_balance", 0.0),
+    )
     arr = apply_saturation(arr, params.get("saturation", 1.0))
     arr = apply_vibrance(arr, params.get("vibrance", 0.0))
     arr = apply_gamma(arr, params.get("gamma", 1.0))
