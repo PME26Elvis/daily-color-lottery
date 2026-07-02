@@ -68,8 +68,16 @@ def score_image(img: Image.Image, weights: dict[str, float] | None = None) -> di
     }
     total_weight = sum(float(weights.get(k, 0.0)) for k in parts) or 1.0
     score = sum(parts[k] * float(weights.get(k, 0.0)) for k in parts) / total_weight
+    exposure_balance = exposure_score * clipping_score
+    saturation_balance = saturation_score * color_balance_score
+    detail_score = sharpness_score
+
     return {
         "score": round(score * 100.0, 2),
+        "contrast": round(contrast_score * 100.0, 2),
+        "exposure_balance": round(exposure_balance * 100.0, 2),
+        "saturation_balance": round(saturation_balance * 100.0, 2),
+        "detail": round(detail_score * 100.0, 2),
         "exposure_score": round(exposure_score * 100.0, 2),
         "contrast_score": round(contrast_score * 100.0, 2),
         "saturation_score": round(saturation_score * 100.0, 2),
