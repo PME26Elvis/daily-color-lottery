@@ -19,8 +19,18 @@ def numpy_seed() -> int:
     return int.from_bytes(os.urandom(8), "big", signed=False)
 
 
-def sample_ranges(ranges: dict[str, list[float]]) -> dict[str, float]:
-    return {key: uniform(float(value[0]), float(value[1])) for key, value in ranges.items()}
+def sample_ranges(ranges: dict[str, Any]) -> dict[str, Any]:
+    sampled = {}
+    for key, value in ranges.items():
+        if (
+            isinstance(value, list)
+            and len(value) == 2
+            and all(isinstance(item, int | float) for item in value)
+        ):
+            sampled[key] = uniform(float(value[0]), float(value[1]))
+        else:
+            sampled[key] = value
+    return sampled
 
 
 def random_metadata() -> dict[str, Any]:
