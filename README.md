@@ -114,3 +114,22 @@ Generation is no longer limited to the first configured style ranges. A candidat
 Replay compatibility is preserved: run records still store `style`, `params`, and `grain_seed_hex`, so `--replay-run-log` and `--replay-run-id` can regenerate outputs from historical records. New metadata such as `algorithm`, `source_profile`, `selection_reason`, `candidate_rank`, `diversity_score`, and `overall_selection_score` is additive for existing JSON consumers.
 
 Analytics now include style, source, algorithm, and source-profile-bucket summaries. In addition to existing `style-analytics.json` and `source-analytics.json`, the site writes `docs/data/algorithm-analytics.json` with rankings, average scores, best outputs, daily/source wins, recent 7-day averages, and usage counts.
+
+## Experiment Studio
+
+The GitHub Pages dashboard now includes an **Experiment Studio** section that turns the static report into a client-side lab for the adaptive multi-algorithm pipeline. It remains static-site friendly: all controls read from JSON already published under `docs/data/`, and no backend service or external chart library is required.
+
+Studio capabilities include:
+
+- **Shareable state**: selected source, output, comparison baseline, and comparison mode are encoded in URL hashes such as `#studio?source=...&output=...&compare=...`.
+- **Persistent preferences**: comparison mode, favorite algorithms, visible score components, and compact card mode are stored in browser `localStorage`.
+- **Comparison modes**: before/after slider, side-by-side comparison, grid-by-algorithm review, winner-vs-nearest-competitor, and same-source latest-run inspection.
+- **Candidate explanations**: algorithm label/description, selection reason, rank, diversity score, overall selection score, profile tags, palette, score components, and full replay params are shown for the selected output. Missing newer adaptive fields degrade to sensible fallback text.
+- **Score explorer**: selected metrics render as vanilla SVG bars with tooltips for exposure, contrast, saturation, clipping, sharpness, palette harmony, dynamic range, mood distinctiveness, and artifact risk.
+- **Replay and export tools**: each selected result shows a copyable local replay command (`python -m src.generate --replay-run-id <run_id>`), a JSON replay snippet, downloadable output metadata, downloadable comparison manifests, and a permalink copy action.
+
+The leaderboard has also been expanded with min-score, badge, source-profile-tag, and sort controls while preserving the existing style/source/date/algorithm/profile filters.
+
+### Dashboard data expectations
+
+For full Studio fidelity, rows in `docs/data/latest-run.json` should include the stable fields already emitted by generation (`run_id`, `source_path`, `output_path` or `latest_path`, `style`, `params`, and `score.score`) plus any available adaptive metadata (`algorithm`, `algorithm_description`, `selection_reason`, `candidate_rank`, `diversity_score`, `overall_selection_score`, `palette`, `source_profile`, and `source_profile_tags`). Older rows remain usable; the dashboard treats adaptive fields as optional.
