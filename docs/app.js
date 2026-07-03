@@ -6,7 +6,11 @@ const data = {
   styleAnalytics: {},
   sourceAnalytics: {},
   algorithmAnalytics: {},
+  recipeAnalytics: {},
+  recipes: [],
 };
+
+const recipeFilters = { tag: "all", algorithm: "all", style: "all", profile: "all", minScore: "", favorites: "all" };
 
 const leaderboardFilters = {
   style: "all",
@@ -390,6 +394,73 @@ function setupStudioActions() {
   document.querySelector("#studio-copy-link")?.addEventListener("click", async () => { writeStudioHash(); await navigator.clipboard?.writeText(location.href); });
   document.querySelector("#studio-download-json")?.addEventListener("click", () => downloadJson("experiment-output.json", selectedStudioRows().selected));
   document.querySelector("#studio-download-manifest")?.addEventListener("click", () => { const s = selectedStudioRows(); downloadJson("comparison-manifest.json", { run_id: data.latest?.run_id, state: studioState, selected: s.selected, compare: s.compare, outputs: s.sourceRows }); });
+}
+
+
+function recipeScore(recipe) { return recipe?.score_summary?.score ?? recipe?.score?.score ?? null; }
+function recipeFavoriteIds() { try { return new Set(JSON.parse(localStorage.getItem("favoriteRecipes") || "[]")); } catch { return new Set(); } }
+function saveRecipeFavoriteIds(ids) { localStorage.setItem("favoriteRecipes", JSON.stringify([...ids])); }
+function recipeCommand(recipe) { return recipe?.replay_command || `python -m src.generate --recipe ${recipe?.recipe_id || "RECIPE_ID"}`; }
+function recipePreview(recipe) { return recipe?.source_output_path || recipe?.latest_path || recipe?.output_path || ""; }
+function compactRecipeSnippet(recipe) { return JSON.stringify({ recipe_id: recipe.recipe_id, style: recipe.style, algorithm: recipe.algorithm, params: recipe.params, grain_seed_policy: recipe.grain_seed_policy }); }
+function collectRecipeOptions() {
+  const tags = new Set(), algorithms = new Set(), styles = new Set(), profiles = new Set();
+  for (const recipe of data.recipes || []) {
+    for (const tag of recipe.tags || []) tags.add(tag);
+    if (recipe.algorithm) algorithms.add(recipe.algorithm);
+    if (recipe.style) styles.add(recipe.style);
+    if (recipe.source_profile_bucket || recipe.source_profile?.profile_bucket) profiles.add(recipe.source_profile_bucket || recipe.source_profile.profile_bucket);
+  }
+  return { tags: [...tags].sort(), algorithms: [...algorithms].sort(), styles: [...styles].sort(), profiles: [...profiles].sort() };
+}
+function renderRecipeFilters() {
+  const opts = collectRecipeOptions();
+  populateSelect("#recipe-filter-tag", opts.tags.map((x) => optionHtml(x, x)), "All tags");
+  populateSelect("#recipe-filter-algorithm", opts.algorithms.map((x) => optionHtml(x, x)), "All algorithms");
+  populateSelect("#recipe-filter-style", opts.styles.map((x) => optionHtml(x, x)), "All styles");
+  populateSelect("#recipe-filter-profile", opts.profiles.map((x) => optionHtml(x, x)), "All profiles");
+}
+function setupRecipeFilters() {
+  document.querySelector("#recipe-filters")?.addEventListener("submit", (event) => event.preventDefault());
+  const controls = [["#recipe-filter-tag", "tag"], ["#recipe-filter-algorithm", "algorithm"], ["#recipe-filter-style", "style"], ["#recipe-filter-profile", "profile"], ["#recipe-filter-favorites", "favorites"]];
+  for (const [selector, key] of controls) {
+    const el = document.querySelector(selector); if (!el) continue; el.value = recipeFilters[key];
+    el.addEventListener("change", (event) => { recipeFilters[key] = event.target.value; renderRecipes(); });
+  }
+  const min = document.querySelector("#recipe-filter-score");
+  if (min) { min.value = recipeFilters.minScore; min.addEventListener("input", (event) => { recipeFilters.minScore = event.target.value; renderRecipes(); }); }
+  document.querySelector("#recipe-download-all")?.addEventListener("click", () => downloadJson("recipes.json", data.recipes || []));
+}
+function renderRecipes() {
+  const container = document.querySelector("#recipes"); if (!container) return;
+  const favorites = recipeFavoriteIds();
+  const minScore = Number(recipeFilters.minScore);
+  const rows = (data.recipes || [])
+    .filter((r) => recipeFilters.tag === "all" || (r.tags || []).includes(recipeFilters.tag))
+    .filter((r) => recipeFilters.algorithm === "all" || r.algorithm === recipeFilters.algorithm)
+    .filter((r) => recipeFilters.style === "all" || r.style === recipeFilters.style)
+    .filter((r) => recipeFilters.profile === "all" || (r.source_profile_bucket || r.source_profile?.profile_bucket) === recipeFilters.profile)
+    .filter((r) => !Number.isFinite(minScore) || Number(recipeScore(r) || 0) >= minScore)
+    .filter((r) => recipeFilters.favorites !== "favorites" || favorites.has(r.recipe_id))
+    .sort((a, b) => Number(recipeScore(b) || 0) - Number(recipeScore(a) || 0));
+  if (!rows.length) { container.innerHTML = `<div class="empty">No recipes match the current filters yet.</div>`; return; }
+  container.innerHTML = rows.map((recipe) => {
+    const command = recipeCommand(recipe);
+    const analytics = (data.recipeAnalytics?.recipes || []).find((row) => row.recipe_id === recipe.recipe_id) || {};
+    return `<article class="recipe-card ${favorites.has(recipe.recipe_id) ? "favorite" : ""}">
+      ${recipePreview(recipe) ? `<img class="recipe-preview" src="${escapeHtml(recipePreview(recipe))}" alt="Preview for ${escapeHtml(recipe.name || recipe.recipe_id)}">` : ""}
+      <div class="recipe-body"><div class="recipe-top"><div><h3>${escapeHtml(recipe.name || recipe.recipe_id)}</h3><p class="row-subtitle">${escapeHtml(recipe.algorithm || "style_range")} · ${escapeHtml(recipe.style || "unknown")} · ${escapeHtml(recipe.source_profile_bucket || recipe.source_profile?.profile_bucket || "unknown profile")}</p></div><strong class="score">${fmtScore(recipeScore(recipe))}</strong></div>
+      ${paletteHtml(recipe, "Recipe palette")}
+      <div class="recipe-tags">${(recipe.tags || []).map((tag) => `<span class="recipe-tag">${escapeHtml(tag)}</span>`).join("")}</div>
+      <code class="recipe-command">${escapeHtml(command)}</code>
+      <details class="recipe-inspector"><summary>Inspect recipe JSON</summary><pre>${escapeHtml(JSON.stringify(recipe, null, 2))}</pre><p class="muted">Uses: ${analytics.usage_count || 0} · reused avg ${fmtScore(analytics.average_score_when_reused)} · best profile ${escapeHtml(analytics.best_source_profile_match || "—")} · drift ${escapeHtml(analytics.recipe_drift ?? "—")}</p></details>
+      <div class="recipe-card-actions"><button type="button" data-recipe-favorite="${escapeHtml(recipe.recipe_id)}">${favorites.has(recipe.recipe_id) ? "Unfavorite" : "Favorite"}</button><button type="button" data-recipe-copy="${escapeHtml(recipe.recipe_id)}">Copy command</button><button type="button" data-recipe-snippet="${escapeHtml(recipe.recipe_id)}">Copy snippet</button><button type="button" data-recipe-download="${escapeHtml(recipe.recipe_id)}">Export JSON</button></div></div>
+    </article>`;
+  }).join("");
+  document.querySelectorAll("[data-recipe-favorite]").forEach((el) => el.addEventListener("click", () => { const ids = recipeFavoriteIds(); const id = el.dataset.recipeFavorite; ids.has(id) ? ids.delete(id) : ids.add(id); saveRecipeFavoriteIds(ids); renderRecipes(); }));
+  document.querySelectorAll("[data-recipe-copy]").forEach((el) => el.addEventListener("click", async () => { const r = data.recipes.find((x) => x.recipe_id === el.dataset.recipeCopy); await navigator.clipboard?.writeText(recipeCommand(r)); }));
+  document.querySelectorAll("[data-recipe-snippet]").forEach((el) => el.addEventListener("click", async () => { const r = data.recipes.find((x) => x.recipe_id === el.dataset.recipeSnippet); await navigator.clipboard?.writeText(compactRecipeSnippet(r)); }));
+  document.querySelectorAll("[data-recipe-download]").forEach((el) => el.addEventListener("click", () => { const r = data.recipes.find((x) => x.recipe_id === el.dataset.recipeDownload); downloadJson(`${r.recipe_id}.json`, r); }));
 }
 
 function renderMetrics() {
@@ -1020,6 +1091,8 @@ async function init() {
   data.styleAnalytics = await loadJson("data/style-analytics.json", {});
   data.sourceAnalytics = await loadJson("data/source-analytics.json", {});
   data.algorithmAnalytics = await loadJson("data/algorithm-analytics.json", {});
+  data.recipeAnalytics = await loadJson("data/recipe-analytics.json", {});
+  data.recipes = await loadJson("data/recipes.json", []);
 
   loadStudioPreferences();
   parseStudioHash();
@@ -1028,6 +1101,9 @@ async function init() {
   renderDailyWinner();
   setupWinnerReveal();
   renderToday();
+  renderRecipeFilters();
+  setupRecipeFilters();
+  renderRecipes();
   renderExperimentStudio();
   setupStudioActions();
   renderLeaderboardFilters();

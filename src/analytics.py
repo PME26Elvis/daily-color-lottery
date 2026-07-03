@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from src.utils import load_jsonl, write_json
+from src.recipes import build_recipe_analytics
 
 
 def _score_value(output: dict[str, Any]) -> float | None:
@@ -214,10 +215,13 @@ def write_style_analytics(logs_dir: Path, docs_data_dir: Path, limit: int = 365)
     analytics = build_style_analytics(runs)
     source_analytics = build_source_analytics(runs)
     algorithm_analytics = build_algorithm_analytics(runs)
+    recipe_analytics = build_recipe_analytics(runs)
     write_json(logs_dir / "style_analytics.json", analytics)
     write_json(docs_data_dir / "style-analytics.json", analytics)
     write_json(logs_dir / "source_analytics.json", source_analytics)
     write_json(docs_data_dir / "source-analytics.json", source_analytics)
     write_json(logs_dir / "algorithm_analytics.json", algorithm_analytics)
     write_json(docs_data_dir / "algorithm-analytics.json", algorithm_analytics)
+    write_json(logs_dir / "recipe_analytics.json", recipe_analytics)
+    write_json(docs_data_dir / "recipe-analytics.json", recipe_analytics)
     return analytics

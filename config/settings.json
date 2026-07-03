@@ -477,5 +477,8 @@
       "diversity_explorer": 5,
       "monochrome_editorial": 2
     }
+  },
+  "recipes": {
+    "regenerate_grain": true
   }
 }

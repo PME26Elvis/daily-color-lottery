@@ -46,6 +46,28 @@
 
       <section class="grid metrics" id="metrics"></section>
 
+      <section class="panel recipe-marketplace" id="recipe-marketplace" aria-labelledby="recipe-marketplace-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Presets / Recipes</p>
+            <h2 id="recipe-marketplace-title">Browse reusable color recipes</h2>
+            <p class="muted">Favorite presets locally, inspect recipe metadata, export JSON, and copy replay commands.</p>
+          </div>
+          <div class="recipe-actions">
+            <button type="button" id="recipe-download-all">Download all recipes JSON</button>
+          </div>
+        </div>
+        <form class="recipe-filters" id="recipe-filters" aria-label="Recipe filters">
+          <label><span>Tag</span><select id="recipe-filter-tag"><option value="all">All tags</option></select></label>
+          <label><span>Algorithm</span><select id="recipe-filter-algorithm"><option value="all">All algorithms</option></select></label>
+          <label><span>Style</span><select id="recipe-filter-style"><option value="all">All styles</option></select></label>
+          <label><span>Profile</span><select id="recipe-filter-profile"><option value="all">All profiles</option></select></label>
+          <label><span>Min score</span><input id="recipe-filter-score" type="number" min="0" max="100" step="1" placeholder="0" /></label>
+          <label><span>Favorites</span><select id="recipe-filter-favorites"><option value="all">All recipes</option><option value="favorites">Favorites only</option></select></label>
+        </form>
+        <div id="recipes" class="recipe-grid"></div>
+      </section>
+
       <section class="panel">
         <div class="section-heading">
           <div>

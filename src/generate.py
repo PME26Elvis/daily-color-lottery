@@ -11,6 +11,7 @@ from src.image_ops import dominant_palette_hex, grade_image, image_profile, open
 from src.algorithms import generate_candidates, select_diverse_candidates
 from src.randomness import numpy_seed, random_metadata, sample_ranges
 from src.analytics import write_style_analytics
+from src.recipes import load_recipe, write_recipe_catalog
 from src.source_tracking import build_inventory, diff_inventory, merge_inventory
 from src.utils import (
     append_jsonl,
@@ -40,6 +41,8 @@ def parse_args() -> argparse.Namespace:
         "--replay-run-log", default=None, help="Replay a run from a run summary JSON file"
     )
     parser.add_argument("--replay-run-id", default=None, help="Replay a run_id from logs/runs.jsonl")
+    parser.add_argument("--recipe", default=None, help="Apply a reusable recipe id to all current sources")
+    parser.add_argument("--recipe-file", default=None, help="Recipe catalog JSON path (defaults to logs/recipes.json, then docs/data/recipes.json)")
     return parser.parse_args()
 
 
@@ -181,6 +184,106 @@ def replay_outputs(
     return summary
 
 
+
+def generate_recipe_outputs(
+    *,
+    root: Path,
+    sources_dir: Path,
+    output_dir: Path,
+    logs_dir: Path,
+    recipe: dict[str, Any],
+    run_id: str,
+    run_date: str,
+    quality: int,
+    weights: dict[str, Any],
+    created_at: str,
+    regenerate_grain: bool = True,
+) -> dict[str, Any]:
+    latest_dir = output_dir / "latest"
+    if latest_dir.exists():
+        shutil.rmtree(latest_dir)
+    ensure_dir(latest_dir)
+    recipe_slug = slugify(str(recipe.get("recipe_id") or "recipe"))
+    params = recipe.get("params") or {}
+    style_name = str(recipe.get("style") or "recipe")
+    source_seed_hex = (recipe.get("grain_seed_policy") or {}).get("source_seed_hex") or "0x0"
+    all_outputs: list[dict[str, Any]] = []
+    errors: list[dict[str, Any]] = []
+    source_paths = iter_source_images(sources_dir)
+    for index, source_path in enumerate(source_paths, start=1):
+        source_rel = rel(source_path, root)
+        source_slug = slugify(source_path.stem)
+        source_latest_dir = latest_dir / source_slug
+        source_archive_dir = output_dir / "recipes" / run_date / recipe_slug / source_slug
+        ensure_dir(source_latest_dir)
+        ensure_dir(source_archive_dir)
+        try:
+            original = open_rgb(source_path)
+            source_profile = image_profile(original)
+            seed = numpy_seed() if regenerate_grain else int(str(source_seed_hex), 16)
+            out_img = grade_image(original, params, seed)
+            score = score_image(out_img, weights)
+            palette = dominant_palette_hex(out_img)
+            filename = f"{run_id}_{index:02d}_{style_name}.jpg"
+            archive_path = source_archive_dir / filename
+            latest_path = source_latest_dir / f"recipe_{recipe_slug}_{style_name}.jpg"
+            save_jpeg(out_img, archive_path, quality)
+            save_jpeg(out_img, latest_path, quality)
+            row = {
+                "mode": "recipe",
+                "recipe_id": recipe.get("recipe_id"),
+                "recipe_name": recipe.get("name"),
+                "run_id": run_id,
+                "run_date": run_date,
+                "source_path": source_rel,
+                "source_name": source_path.name,
+                "source_slug": source_slug,
+                "style": style_name,
+                "style_description": f"Applied recipe {recipe.get('name') or recipe.get('recipe_id')}",
+                "algorithm": recipe.get("algorithm") or "style_range",
+                "source_profile": source_profile,
+                "source_profile_bucket": source_profile.get("profile_bucket"),
+                "source_profile_tags": source_profile.get("profile_tags", []),
+                "selection_reason": "Applied reusable recipe to current source image.",
+                "candidate_rank": index,
+                "index": index,
+                "params": params,
+                "grain_seed_hex": hex(seed),
+                "grain_seed_policy": "regenerate" if regenerate_grain else "fixed",
+                "output_path": rel(archive_path, root),
+                "latest_path": rel(latest_path, root),
+                "score": score,
+                "palette": palette,
+                "width": original.width,
+                "height": original.height,
+            }
+            all_outputs.append(row)
+        except Exception as exc:
+            errors.append({"source": source_rel, "recipe_id": recipe.get("recipe_id"), "error": repr(exc)})
+    if all_outputs:
+        best = max(all_outputs, key=lambda x: float(x["score"]["score"]))
+        for row in all_outputs:
+            row["best_for_source_today"] = row["output_path"] == best["output_path"]
+    summary = {
+        "mode": "recipe",
+        "recipe_id": recipe.get("recipe_id"),
+        "recipe": recipe,
+        "run_id": run_id,
+        "run_date": run_date,
+        "created_at": created_at,
+        "source_count": len(source_paths),
+        "outputs_generated": len(all_outputs),
+        "average_score": round(sum(float(o["score"]["score"]) for o in all_outputs) / len(all_outputs), 2) if all_outputs else None,
+        "best_output": max(all_outputs, key=lambda x: float(x["score"]["score"])) if all_outputs else None,
+        "errors": errors,
+        "outputs": all_outputs,
+    }
+    append_jsonl(logs_dir / "runs.jsonl", summary)
+    write_json(logs_dir / "latest_run.json", summary)
+    print(f"mode=recipe recipe_id={recipe.get('recipe_id')} run_id={run_id}")
+    print(f"sources={len(source_paths)} outputs={len(all_outputs)} errors={len(errors)}")
+    return summary
+
 def main() -> int:
     args = parse_args()
     root = ROOT
@@ -215,6 +318,28 @@ def main() -> int:
             weights=weights,
             created_at=now.isoformat(),
         )
+        return 0
+
+    if args.recipe:
+        recipe_path = Path(args.recipe_file) if args.recipe_file else logs_dir / "recipes.json"
+        if not recipe_path.is_absolute():
+            recipe_path = root / recipe_path
+        if not recipe_path.exists() and not args.recipe_file:
+            recipe_path = docs_data_dir / "recipes.json"
+        recipe = load_recipe(args.recipe, recipe_path)
+        summary = generate_recipe_outputs(
+            root=root, sources_dir=sources_dir, output_dir=output_dir, logs_dir=logs_dir,
+            recipe=recipe, run_id=run_id, run_date=run_date, quality=quality, weights=weights,
+            created_at=now.isoformat(), regenerate_grain=bool(config.get("recipes", {}).get("regenerate_grain", True)),
+        )
+        runs = compact_runs(load_jsonl(logs_dir / "runs.jsonl"))
+        leaderboard_path = logs_dir / "leaderboard.json"
+        leaderboard = update_leaderboard(read_json(leaderboard_path, []), summary["outputs"], leaderboard_limit)
+        write_json(leaderboard_path, leaderboard)
+        write_json(docs_data_dir / "latest-run.json", summary)
+        write_json(docs_data_dir / "runs.json", runs)
+        write_json(docs_data_dir / "leaderboard.json", leaderboard)
+        write_style_analytics(logs_dir, docs_data_dir)
         return 0
 
     run_meta = random_metadata()
@@ -355,6 +480,7 @@ def main() -> int:
     write_json(docs_data_dir / "leaderboard.json", leaderboard)
     write_json(docs_data_dir / "source-inventory.json", merged_inventory)
     write_json(docs_data_dir / "source-events.json", load_jsonl(logs_dir / "source_events.jsonl")[-200:])
+    write_recipe_catalog(logs_dir, docs_data_dir, summary)
     write_style_analytics(logs_dir, docs_data_dir)
 
     print(f"run_id={run_id}")
