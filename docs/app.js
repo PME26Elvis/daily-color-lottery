@@ -47,7 +47,22 @@ function sourceLabel(item) {
 }
 
 function profileTagsForFilter(output) {
-  return output?.source_profile_tags || output?.source_profile?.tags || [];
+  return output?.source_profile_tags || output?.source_profile?.profile_tags || output?.source_profile?.tags || [];
+}
+
+function renderDataHealth() {
+  const container = document.querySelector("#data-health");
+  if (!container) return;
+  const warnings = [];
+  if (!data.latest || !Array.isArray(data.latest.outputs)) warnings.push("latest-run.json is missing or has no outputs array");
+  if (!Array.isArray(data.leaderboard)) warnings.push("leaderboard.json is missing or not an array");
+  if (!Array.isArray(data.runs)) warnings.push("runs.json is missing or not an array");
+  if (!data.styleAnalytics?.styles) warnings.push("style-analytics.json is missing style rows");
+  if (!data.sourceAnalytics?.sources) warnings.push("source-analytics.json is missing source rows");
+  if (!data.algorithmAnalytics?.algorithms) warnings.push("algorithm-analytics.json is missing algorithm rows");
+  container.innerHTML = warnings.length
+    ? `<p class="eyebrow">Data health</p><h2>Dashboard fallback mode</h2><p class="muted">${warnings.map(escapeHtml).join("; ")}.</p>`
+    : `<p class="eyebrow">Data health</p><h2>All dashboard data files loaded</h2><p class="muted">Static JSON contracts are present; optional recipe data is handled gracefully.</p>`;
 }
 
 function collectLeaderboardFilterOptions() {
@@ -1097,6 +1112,7 @@ async function init() {
   loadStudioPreferences();
   parseStudioHash();
 
+  renderDataHealth();
   renderMetrics();
   renderDailyWinner();
   setupWinnerReveal();

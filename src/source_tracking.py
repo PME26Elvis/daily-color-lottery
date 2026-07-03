@@ -4,14 +4,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from src.utils import file_sha256, iter_source_images, rel
+from src.utils import file_sha256, iter_source_images, safe_rel
 
 
 def build_inventory(source_dir: Path, root: Path, now: datetime) -> dict[str, dict[str, Any]]:
     now_s = now.isoformat()
     inventory = {}
     for path in iter_source_images(source_dir):
-        key = rel(path, root)
+        key = safe_rel(path, root)
         stat = path.stat()
         inventory[key] = {
             "path": key,

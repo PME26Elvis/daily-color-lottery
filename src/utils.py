@@ -87,3 +87,28 @@ def iter_source_images(source_dir: Path) -> list[Path]:
 
 def rel(path: Path, root: Path) -> str:
     return path.relative_to(root).as_posix()
+
+
+def safe_rel(path: Path, root: Path, label: str | None = None) -> str:
+    """Return a stable repo-relative or portable external path key."""
+    resolved_path = path.resolve()
+    resolved_root = root.resolve()
+    try:
+        return resolved_path.relative_to(resolved_root).as_posix()
+    except ValueError:
+        digest = hashlib.sha256(resolved_path.as_posix().encode("utf-8")).hexdigest()[:12]
+        name = slugify(label or resolved_path.name)
+        return f"external/{digest}/{name}"
+
+
+def resolve_config_path(value: str | None, default: str, root: Path) -> Path:
+    raw = Path(value or default).expanduser()
+    return raw if raw.is_absolute() else root / raw
+
+
+def downsample_image(img: Any, max_dimension: int | None):
+    if not max_dimension or max_dimension <= 0 or max(img.size) <= max_dimension:
+        return img.copy()
+    sample = img.copy()
+    sample.thumbnail((max_dimension, max_dimension))
+    return sample
