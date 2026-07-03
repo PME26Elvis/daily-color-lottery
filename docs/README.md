@@ -21,3 +21,9 @@ Supported interactions:
 - Copy permalinks or download selected-output metadata and comparison manifests as client-generated JSON blobs.
 
 Rows in `data/latest-run.json` should always provide `source_path`, `style`, `params`, a numeric `score.score`, and either `output_path` or `latest_path`. Optional adaptive fields such as `algorithm`, `selection_reason`, `candidate_rank`, `diversity_score`, `overall_selection_score`, `palette`, and `source_profile_tags` make the Studio richer but are not required for compatibility with older generated JSON.
+
+## Preset marketplace data
+
+The static dashboard reads reusable color presets from `docs/data/recipes.json` and optional reuse statistics from `docs/data/recipe-analytics.json`. Favorites are client-side only and are persisted in `localStorage` under `favoriteRecipes`.
+
+Recipe cards expose preview images, tags, palette chips, source profile compatibility, score summaries, copyable `python -m src.generate --recipe <recipe-id>` commands, single-recipe JSON export, compact snippet copy, and full-catalog download.

@@ -133,3 +133,26 @@ The leaderboard has also been expanded with min-score, badge, source-profile-tag
 ### Dashboard data expectations
 
 For full Studio fidelity, rows in `docs/data/latest-run.json` should include the stable fields already emitted by generation (`run_id`, `source_path`, `output_path` or `latest_path`, `style`, `params`, and `score.score`) plus any available adaptive metadata (`algorithm`, `algorithm_description`, `selection_reason`, `candidate_rank`, `diversity_score`, `overall_selection_score`, `palette`, `source_profile`, and `source_profile_tags`). Older rows remain usable; the dashboard treats adaptive fields as optional.
+
+## Reusable color recipes
+
+High-performing generated outputs are promoted into reusable recipe presets. A recipe captures the stable recipe id, source output path and run id, algorithm/style metadata, exact grade params, grain seed policy, source profile bucket, score summary, palette, tags, and creation date. Catalogs are written to `logs/recipes.json` for local history and `docs/data/recipes.json` for the static dashboard.
+
+Recipe ids are deterministic hashes of the normalized params, style, algorithm, and source profile bucket. This keeps repeated promotions deduplicated while allowing the same look to be bucketed separately for different source profiles.
+
+### Applying a recipe
+
+Normal daily generation remains the default. Recipe mode is opt-in:
+
+```bash
+python -m src.generate --recipe recipe-abc123
+python -m src.generate --recipe recipe-abc123 --recipe-file docs/data/recipes.json
+```
+
+When a recipe is selected, its params are applied to every current source image, outputs are scored normally, and run rows include `mode: "recipe"` and `recipe_id`. Set `recipes.regenerate_grain` in `config/settings.json` to control whether grain seeds are regenerated or fixed from the promoted source output.
+
+### Dashboard marketplace
+
+The GitHub Pages dashboard includes a Presets / Recipes marketplace. Cards show a preview image, recipe name, algorithm/style, score, tags, palette, profile compatibility, analytics when reuse data exists, and the replay command. Filters support tag, algorithm, style, profile bucket, minimum score, and favorites. Favorites are stored in browser `localStorage` only.
+
+Each recipe card can export a single JSON file, copy an apply command, or copy a compact recipe snippet. The section also supports downloading the full recipe catalog JSON.
