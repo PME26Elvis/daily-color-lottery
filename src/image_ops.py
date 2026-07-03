@@ -170,6 +170,54 @@ def apply_grain(arr: np.ndarray, value: float, seed: int) -> np.ndarray:
     return arr + noise
 
 
+
+def image_profile(img: Image.Image) -> dict[str, Any]:
+    """Compute source-image metrics used by adaptive generation."""
+    import colorsys, math
+    arr = to_array(img)
+    y = luminance(arr)
+    maxc = arr.max(axis=2)
+    minc = arr.min(axis=2)
+    sat = maxc - minc
+    pixels = arr.reshape(-1, 3)
+    sat_flat = sat.reshape(-1)
+    colorful = pixels[sat_flat > 0.05]
+    if len(colorful):
+        if len(colorful) > 4096:
+            colorful = colorful[:: max(1, len(colorful) // 4096)][:4096]
+        hues = np.array([colorsys.rgb_to_hsv(float(r), float(g), float(b))[0] for r, g, b in colorful])
+        angles = hues * 2.0 * math.pi
+        resultant = math.hypot(float(np.cos(angles).mean()), float(np.sin(angles).mean()))
+        hue_spread = float(np.clip(1.0 - resultant, 0.0, 1.0))
+    else:
+        hue_spread = 0.0
+    channel_means = arr.reshape(-1, 3).mean(axis=0)
+    temp_bias = float(channel_means[0] - channel_means[2])
+    if y.shape[0] > 1 and y.shape[1] > 1:
+        local = float((np.abs(np.diff(y, axis=1)).mean() + np.abs(np.diff(y, axis=0)).mean()) / 2.0)
+    else:
+        local = 0.0
+    tags = []
+    mean_y = float(y.mean()); std_y = float(y.std()); mean_sat = float(sat.mean())
+    if mean_y < 0.38: tags.append("low-light")
+    if mean_y > 0.62: tags.append("high-key")
+    if mean_sat > 0.24: tags.append("colorful")
+    if mean_sat < 0.12: tags.append("muted")
+    if std_y > 0.24: tags.append("high-contrast")
+    if not tags: tags.append("balanced")
+    return {
+        "mean_luminance": round(mean_y, 4),
+        "luminance_std": round(std_y, 4),
+        "clipping_ratio": round(float((arr <= 0.015).mean() + (arr >= 0.985).mean()), 5),
+        "mean_saturation": round(mean_sat, 4),
+        "dominant_palette": dominant_palette_hex(img),
+        "hue_spread": round(hue_spread, 4),
+        "temperature_bias": round(temp_bias, 4),
+        "sharpness_local_contrast": round(local, 5),
+        "profile_tags": tags,
+        "profile_bucket": tags[0],
+    }
+
 def grade_image(img: Image.Image, params: dict[str, Any], grain_seed: int) -> Image.Image:
     arr = to_array(img)
     arr = apply_exposure(arr, params.get("exposure", 0.0))

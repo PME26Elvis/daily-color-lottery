@@ -7,7 +7,8 @@ from pathlib import Path
 from typing import Any
 
 from src.grading import score_image
-from src.image_ops import dominant_palette_hex, grade_image, open_rgb
+from src.image_ops import dominant_palette_hex, grade_image, image_profile, open_rgb
+from src.algorithms import generate_candidates, select_diverse_candidates
 from src.randomness import numpy_seed, random_metadata, sample_ranges
 from src.analytics import write_style_analytics
 from src.source_tracking import build_inventory, diff_inventory, merge_inventory
@@ -251,15 +252,31 @@ def main() -> int:
             errors.append({"source": source_rel, "error": repr(exc)})
             continue
 
-        source_outputs = []
-        for index, style in enumerate(styles[: int(config["run"].get("outputs_per_source", 5))], start=1):
-            style_name = style["name"]
-            params = sample_ranges(style["ranges"])
-            seed = numpy_seed()
+        source_profile = image_profile(original)
+        candidate_pool = []
+        algorithm_cfg = config.get("algorithms", {})
+        for candidate in generate_candidates(styles, source_profile, algorithm_cfg):
             try:
-                out_img = grade_image(original, params, seed)
+                out_img = grade_image(original, candidate["params"], int(candidate["grain_seed"]))
                 score = score_image(out_img, weights)
                 palette = dominant_palette_hex(out_img)
+                candidate.update({"score": score, "palette": palette})
+                candidate_pool.append(candidate)
+            except Exception as exc:
+                errors.append({"source": source_rel, "style": candidate.get("style"), "algorithm": candidate.get("algorithm"), "error": repr(exc)})
+
+        final_count = int(config["run"].get("outputs_per_source", 5))
+        selected_candidates = select_diverse_candidates(candidate_pool, final_count)
+
+        source_outputs = []
+        for index, candidate in enumerate(selected_candidates, start=1):
+            style_name = candidate["style"]
+            params = candidate["params"]
+            seed = int(candidate["grain_seed"])
+            try:
+                out_img = grade_image(original, params, seed)
+                score = candidate.get("score") or score_image(out_img, weights)
+                palette = candidate.get("palette") or dominant_palette_hex(out_img)
                 filename = f"{run_id}_{index:02d}_{style_name}.jpg"
                 archive_path = source_archive_dir / filename
                 latest_path = source_latest_dir / f"{index:02d}_{style_name}.jpg"
@@ -273,9 +290,19 @@ def main() -> int:
                     "source_slug": source_slug,
                     "source_sha256": current_inventory.get(source_rel, {}).get("sha256"),
                     "style": style_name,
-                    "style_description": style.get("description", ""),
+                    "style_description": candidate.get("explanation", ""),
+                    "algorithm": candidate.get("algorithm"),
+                    "algorithm_description": candidate.get("algorithm_description", ""),
+                    "source_profile": source_profile,
+                    "source_profile_bucket": source_profile.get("profile_bucket"),
+                    "source_profile_tags": source_profile.get("profile_tags", []),
+                    "selection_reason": candidate.get("selection_reason", "Selected by quality/diversity ranking"),
+                    "candidate_rank": index,
+                    "diversity_score": candidate.get("diversity_score", 0),
+                    "overall_selection_score": candidate.get("overall_selection_score", score.get("score", 0)),
+                    "badges": list(dict.fromkeys(candidate.get("tags", []) + (["Best for source"] if index == 1 else []))),
                     "index": index,
-                    "params": {k: round(float(v), 6) for k, v in params.items()},
+                    "params": {k: round(float(v), 6) if isinstance(v, (int, float)) else v for k, v in params.items()},
                     "grain_seed_hex": hex(seed),
                     "output_path": rel(archive_path, root),
                     "latest_path": rel(latest_path, root),
@@ -287,7 +314,7 @@ def main() -> int:
                 source_outputs.append(row)
                 all_outputs.append(row)
             except Exception as exc:
-                errors.append({"source": source_rel, "style": style_name, "error": repr(exc)})
+                errors.append({"source": source_rel, "style": style_name, "algorithm": candidate.get("algorithm"), "error": repr(exc)})
         if source_outputs:
             best = max(source_outputs, key=lambda x: float(x["score"]["score"]))
             for row in source_outputs:
@@ -302,6 +329,8 @@ def main() -> int:
         "active_source_count": len(current_inventory),
         "outputs_generated": len(all_outputs),
         "styles": [style["name"] for style in styles],
+        "algorithms": config.get("algorithms", {}),
+        "source_profiles": {o["source_path"]: o.get("source_profile") for o in all_outputs if o.get("source_profile")},
         "average_score": round(
             sum(float(o["score"]["score"]) for o in all_outputs) / len(all_outputs), 2
         )

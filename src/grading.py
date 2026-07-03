@@ -39,6 +39,12 @@ DEFAULT_WEIGHTS = {
     "local_contrast": 0.06,
     "highlight_rolloff": 0.03,
     "distinctiveness": 0.02,
+    "composition_safety": 0.04,
+    "skin_tone_guard": 0.03,
+    "palette_harmony": 0.05,
+    "dynamic_range": 0.05,
+    "mood_distinctiveness": 0.04,
+    "artifact_risk": 0.05,
 }
 
 
@@ -48,6 +54,8 @@ def palette_hue_spread(arr: np.ndarray, sat: np.ndarray) -> float:
     colorful = pixels[sat_flat > 0.05]
     if len(colorful) < 2:
         return 0.0
+    if len(colorful) > 4096:
+        colorful = colorful[:: max(1, len(colorful) // 4096)][:4096]
     hues = np.array([colorsys.rgb_to_hsv(float(r), float(g), float(b))[0] for r, g, b in colorful])
     angles = hues * 2.0 * math.pi
     resultant = math.hypot(float(np.cos(angles).mean()), float(np.sin(angles).mean()))
@@ -99,6 +107,13 @@ def score_image(img: Image.Image, weights: dict[str, float] | None = None) -> di
     )
     distinctiveness_score = gaussian_score(neutral_distance, 0.24, 0.18)
 
+    composition_safety_score = clamp01(1.0 - clipping * 4.0) * gaussian_score(mean_y, 0.5, 0.28)
+    skin_tone_guard_score = color_balance_score * clamp01(1.0 - abs(balance_spread - 0.08))
+    palette_harmony_score = gaussian_score(palette_hue_spread(arr, sat), 0.35, 0.32)
+    dynamic_range_score = gaussian_score(std_y, 0.24, 0.15) * clipping_score
+    mood_distinctiveness_score = distinctiveness_score
+    artifact_risk_score = clamp01(1.0 - (clipping * 4.0 + max(0.0, sharp - 0.09) * 4.0))
+
     parts = {
         "exposure": exposure_score,
         "contrast": contrast_score,
@@ -110,6 +125,12 @@ def score_image(img: Image.Image, weights: dict[str, float] | None = None) -> di
         "local_contrast": local_contrast_score,
         "highlight_rolloff": highlight_rolloff_score,
         "distinctiveness": distinctiveness_score,
+        "composition_safety": composition_safety_score,
+        "skin_tone_guard": skin_tone_guard_score,
+        "palette_harmony": palette_harmony_score,
+        "dynamic_range": dynamic_range_score,
+        "mood_distinctiveness": mood_distinctiveness_score,
+        "artifact_risk": artifact_risk_score,
     }
     total_weight = sum(float(weights.get(k, 0.0)) for k in parts) or 1.0
     score = sum(parts[k] * float(weights.get(k, 0.0)) for k in parts) / total_weight
@@ -133,6 +154,12 @@ def score_image(img: Image.Image, weights: dict[str, float] | None = None) -> di
         "local_contrast_score": round(local_contrast_score * 100.0, 2),
         "highlight_rolloff_score": round(highlight_rolloff_score * 100.0, 2),
         "distinctiveness_score": round(distinctiveness_score * 100.0, 2),
+        "composition_safety_score": round(composition_safety_score * 100.0, 2),
+        "skin_tone_guard_score": round(skin_tone_guard_score * 100.0, 2),
+        "palette_harmony_score": round(palette_harmony_score * 100.0, 2),
+        "dynamic_range_score": round(dynamic_range_score * 100.0, 2),
+        "mood_distinctiveness_score": round(mood_distinctiveness_score * 100.0, 2),
+        "artifact_risk_score": round(artifact_risk_score * 100.0, 2),
         "mean_luminance": round(mean_y, 4),
         "luminance_std": round(std_y, 4),
         "mean_saturation": round(mean_sat, 4),
