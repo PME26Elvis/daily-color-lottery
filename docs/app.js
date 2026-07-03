@@ -5,12 +5,15 @@ const data = {
   events: [],
   styleAnalytics: {},
   sourceAnalytics: {},
+  algorithmAnalytics: {},
 };
 
 const leaderboardFilters = {
   style: "all",
   source: "all",
   runDate: "all",
+  algorithm: "all",
+  profileBucket: "all",
 };
 
 async function loadJson(path, fallback) {
@@ -39,6 +42,8 @@ function collectLeaderboardFilterOptions() {
   const styles = new Set();
   const sources = new Map();
   const runDates = new Set();
+  const algorithms = new Set();
+  const profileBuckets = new Set();
 
   const collectOutput = (output) => {
     if (!output) return;
@@ -46,6 +51,8 @@ function collectLeaderboardFilterOptions() {
     const key = sourceKey(output);
     sources.set(key, sourceLabel(output));
     if (output.run_date) runDates.add(output.run_date);
+    if (output.algorithm) algorithms.add(output.algorithm);
+    if (output.source_profile_bucket || output.source_profile?.profile_bucket) profileBuckets.add(output.source_profile_bucket || output.source_profile.profile_bucket);
   };
 
   for (const row of data.leaderboard || []) collectOutput(row);
@@ -62,6 +69,8 @@ function collectLeaderboardFilterOptions() {
     styles: [...styles].sort((a, b) => a.localeCompare(b)),
     sources: [...sources.entries()].sort((a, b) => a[1].localeCompare(b[1])),
     runDates: [...runDates].sort((a, b) => b.localeCompare(a)),
+    algorithms: [...algorithms].sort((a, b) => a.localeCompare(b)),
+    profileBuckets: [...profileBuckets].sort((a, b) => a.localeCompare(b)),
   };
 }
 
@@ -106,10 +115,12 @@ function populateSelect(selector, options, allLabel) {
 }
 
 function renderLeaderboardFilters() {
-  const { styles, sources, runDates } = collectLeaderboardFilterOptions();
+  const { styles, sources, runDates, algorithms, profileBuckets } = collectLeaderboardFilterOptions();
   populateSelect("#filter-style", styles.map((style) => optionHtml(style, style)), "All styles");
   populateSelect("#filter-source", sources.map(([value, label]) => optionHtml(value, label)), "All sources");
   populateSelect("#filter-run-date", runDates.map((date) => optionHtml(date, date)), "All dates");
+  populateSelect("#filter-algorithm", algorithms.map((algorithm) => optionHtml(algorithm, algorithm)), "All algorithms");
+  populateSelect("#filter-profile", profileBuckets.map((bucket) => optionHtml(bucket, bucket)), "All profiles");
 }
 
 function setupLeaderboardFilters() {
@@ -119,6 +130,8 @@ function setupLeaderboardFilters() {
     ["#filter-style", "style"],
     ["#filter-source", "source"],
     ["#filter-run-date", "runDate"],
+    ["#filter-algorithm", "algorithm"],
+    ["#filter-profile", "profileBucket"],
   ];
 
   for (const [selector, key] of controls) {
@@ -159,6 +172,11 @@ function scoreBreakdownHtml(row) {
     ["exposure_balance", "Exposure"],
     ["saturation_balance", "Saturation"],
     ["detail", "Detail"],
+    ["composition_safety_score", "Composition"],
+    ["palette_harmony_score", "Harmony"],
+    ["dynamic_range_score", "Dynamic range"],
+    ["mood_distinctiveness_score", "Mood"],
+    ["artifact_risk_score", "Artifact risk"],
   ];
   const bars = components
     .map(([key, label]) => {
@@ -523,6 +541,9 @@ function renderToday() {
                       <span class="score">${fmtScore(scoreValue(row))}</span>
                     </div>
                     <p class="muted">${row.best_for_source_today ? "Best for this source today" : row.style_description || ""}</p>
+                    <div class="badges">${(row.badges || [row.algorithm]).filter(Boolean).map((badge) => `<span class="badge">${escapeHtml(badge)}</span>`).join("")}</div>
+                    <p class="row-subtitle">${escapeHtml(row.algorithm || "style_range")} · ${escapeHtml((row.source_profile_tags || []).join(", "))}</p>
+                    <p class="muted">${escapeHtml(row.selection_reason || "")}</p>
                     ${scoreBreakdownHtml(row)}
                     ${paletteHtml(row, `${row.style || "Output"} palette`)}
                     <a class="full-image-link" href="${row.output_path}" target="_blank" rel="noreferrer">Open full image</a>
@@ -545,6 +566,8 @@ function renderLeaderboard() {
     .filter((row) => leaderboardFilters.style === "all" || row.style === leaderboardFilters.style)
     .filter((row) => leaderboardFilters.source === "all" || sourceKey(row) === leaderboardFilters.source)
     .filter((row) => leaderboardFilters.runDate === "all" || row.run_date === leaderboardFilters.runDate)
+    .filter((row) => leaderboardFilters.algorithm === "all" || row.algorithm === leaderboardFilters.algorithm)
+    .filter((row) => leaderboardFilters.profileBucket === "all" || (row.source_profile_bucket || row.source_profile?.profile_bucket) === leaderboardFilters.profileBucket)
     .slice(0, 20);
   if (!rows.length) {
     container.innerHTML = `<div class="empty">No leaderboard entries yet.</div>`;
@@ -653,6 +676,18 @@ function renderSourceEvent(event) {
       </div>
     </li>
   `;
+}
+
+function renderAlgorithmAnalytics() {
+  const container = document.querySelector("#algorithm-analytics");
+  if (!container) return;
+  const summary = data.algorithmAnalytics || {};
+  const rows = (summary.algorithms || []).slice(0, 12);
+  if (!rows.length) { container.innerHTML = `<div class="empty">No algorithm analytics yet.</div>`; return; }
+  container.innerHTML = `
+    <div class="analytics-summary muted">${summary.output_count || 0} outputs · latest run ${summary.latest_run_date || "—"}</div>
+    <div class="style-rankings">${rows.map((row) => `
+      <article class="style-row"><div class="rank">#${row.rank}</div><div><strong>${escapeHtml(row.algorithm)}</strong><p class="row-subtitle">${row.usage_count} uses · ${row.daily_wins} daily wins · ${row.source_wins} source wins</p></div><div class="trend-metrics"><span><small>Avg</small>${fmtScore(row.average_score)}</span><span><small>Best</small>${fmtScore(row.best_score)}</span><span><small>7-day</small>${fmtScore(row.recent_7_day_average)}</span></div></article>`).join("")}</div>`;
 }
 
 function renderSourceAnalytics() {
@@ -771,6 +806,7 @@ async function init() {
   data.events = await loadJson("data/source-events.json", []);
   data.styleAnalytics = await loadJson("data/style-analytics.json", {});
   data.sourceAnalytics = await loadJson("data/source-analytics.json", {});
+  data.algorithmAnalytics = await loadJson("data/algorithm-analytics.json", {});
 
   renderMetrics();
   renderDailyWinner();
@@ -780,6 +816,7 @@ async function init() {
   setupLeaderboardFilters();
   renderLeaderboard();
   renderStyleAnalytics();
+  renderAlgorithmAnalytics();
   renderSourceAnalytics();
   renderEvents();
   renderRuns();

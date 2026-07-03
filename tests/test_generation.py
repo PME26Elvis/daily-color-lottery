@@ -4,7 +4,7 @@ from PIL import Image
 
 from src.generate import load_replay_record, replay_outputs
 from src.grading import score_image
-from src.image_ops import dominant_palette_hex, grade_image
+from src.image_ops import dominant_palette_hex, grade_image, image_profile
 from src.utils import append_jsonl, read_json
 
 
@@ -247,3 +247,18 @@ def test_split_tone_grade_preserves_dimensions_and_rgb_mode():
 
     assert out.size == img.size
     assert out.mode == "RGB"
+
+
+def test_image_profile_contains_adaptive_metrics():
+    img = Image.new("RGB", (16, 16), (100, 120, 140))
+    profile = image_profile(img)
+    expected = {"mean_luminance", "luminance_std", "clipping_ratio", "mean_saturation", "dominant_palette", "hue_spread", "temperature_bias", "sharpness_local_contrast", "profile_tags", "profile_bucket"}
+    assert expected <= profile.keys()
+    assert isinstance(profile["dominant_palette"], list)
+
+def test_score_image_returns_advanced_component_keys():
+    img = Image.new("RGB", (32, 32), (128, 120, 110))
+    score = score_image(img)
+    for key in ["composition_safety_score", "skin_tone_guard_score", "palette_harmony_score", "dynamic_range_score", "mood_distinctiveness_score", "artifact_risk_score"]:
+        assert key in score
+        assert 0 <= score[key] <= 100

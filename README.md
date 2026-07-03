@@ -103,3 +103,14 @@ By default, the project keeps outputs in git history. Deleting files later will 
 ## Notes
 
 This project intentionally avoids AI models so it can run reliably on GitHub-hosted CPU runners. The score is a heuristic, not a real aesthetic judgment.
+
+
+## Adaptive multi-algorithm color lab
+
+Daily Color Lottery now profiles every source image before rendering variants. The source profile records mean luminance, luminance standard deviation, clipping ratio, mean saturation, dominant palette, hue spread, temperature bias, and local contrast/sharpness tags. These metrics are stored with selected outputs in `logs/latest_run.json`, `logs/runs.jsonl`, and `docs/data/latest-run.json`.
+
+Generation is no longer limited to the first configured style ranges. A candidate pipeline builds many looks from multiple algorithms: the backward-compatible `style_range` sampler, `adaptive_auto_enhance`, `palette_cinematic`, `diversity_explorer`, and `monochrome_editorial`. Candidates are rendered, scored, and selected using quality plus diversity across algorithms, palettes, and exposure/contrast/saturation choices.
+
+Replay compatibility is preserved: run records still store `style`, `params`, and `grain_seed_hex`, so `--replay-run-log` and `--replay-run-id` can regenerate outputs from historical records. New metadata such as `algorithm`, `source_profile`, `selection_reason`, `candidate_rank`, `diversity_score`, and `overall_selection_score` is additive for existing JSON consumers.
+
+Analytics now include style, source, algorithm, and source-profile-bucket summaries. In addition to existing `style-analytics.json` and `source-analytics.json`, the site writes `docs/data/algorithm-analytics.json` with rankings, average scores, best outputs, daily/source wins, recent 7-day averages, and usage counts.

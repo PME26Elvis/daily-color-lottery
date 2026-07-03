@@ -170,6 +170,41 @@ def build_style_analytics(runs: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+
+def _profile_bucket(output: dict[str, Any]) -> str:
+    return str(output.get("source_profile_bucket") or (output.get("source_profile") or {}).get("profile_bucket") or "unknown")
+
+def build_algorithm_analytics(runs: list[dict[str, Any]]) -> dict[str, Any]:
+    outputs = iter_run_outputs(runs)
+    dates = [_parse_date(run.get("run_date")) for run in runs]
+    valid_dates = [run_date for run_date in dates if run_date is not None]
+    latest_date = max(valid_dates) if valid_dates else None
+    recent_start = latest_date - timedelta(days=6) if latest_date else None
+    by_algorithm: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    by_bucket: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for output in outputs:
+        if _score_value(output) is None:
+            continue
+        by_algorithm[str(output.get("algorithm") or "style_range")].append(output)
+        by_bucket[_profile_bucket(output)].append(output)
+
+    def rows_for(groups, key_name):
+        rows=[]
+        for key, items in groups.items():
+            scored=[(row, _score_value(row)) for row in items]
+            scores=[score for _row, score in scored if score is not None]
+            recent=[]
+            for row, score in scored:
+                rd=_parse_date(row.get("run_date"))
+                if score is not None and recent_start and rd and recent_start <= rd <= latest_date:
+                    recent.append(score)
+            best_row,best_score=max(scored, key=lambda item: item[1] if item[1] is not None else -1)
+            rows.append({key_name:key,"count":len(scores),"usage_count":len(scores),"average_score":round(sum(scores)/len(scores),2),"best_score":round(float(best_score),2),"daily_wins":sum(1 for row in items if row.get("daily_win")),"source_wins":sum(1 for row in items if row.get("best_for_source_today")),"recent_7_day_average":round(sum(recent)/len(recent),2) if recent else None,"best_output":best_row})
+        rows.sort(key=lambda row:(float(row["average_score"]), float(row["best_score"]), int(row["source_wins"]), str(row[key_name])), reverse=True)
+        for i,row in enumerate(rows,1): row["rank"]=i
+        return rows
+    return {"run_count":len(runs),"output_count":sum(len(v) for v in by_algorithm.values()),"latest_run_date":latest_date.isoformat() if latest_date else None,"recent_window_days":7,"algorithms":rows_for(by_algorithm,"algorithm"),"profile_buckets":rows_for(by_bucket,"profile_bucket")}
+
 def read_compacted_runs(path: Path, limit: int = 365) -> list[dict[str, Any]]:
     return load_jsonl(path)[-limit:]
 
@@ -178,8 +213,11 @@ def write_style_analytics(logs_dir: Path, docs_data_dir: Path, limit: int = 365)
     runs = read_compacted_runs(logs_dir / "runs.jsonl", limit=limit)
     analytics = build_style_analytics(runs)
     source_analytics = build_source_analytics(runs)
+    algorithm_analytics = build_algorithm_analytics(runs)
     write_json(logs_dir / "style_analytics.json", analytics)
     write_json(docs_data_dir / "style-analytics.json", analytics)
     write_json(logs_dir / "source_analytics.json", source_analytics)
     write_json(docs_data_dir / "source-analytics.json", source_analytics)
+    write_json(logs_dir / "algorithm_analytics.json", algorithm_analytics)
+    write_json(docs_data_dir / "algorithm-analytics.json", algorithm_analytics)
     return analytics
