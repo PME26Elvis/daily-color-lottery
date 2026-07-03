@@ -156,3 +156,37 @@ When a recipe is selected, its params are applied to every current source image,
 The GitHub Pages dashboard includes a Presets / Recipes marketplace. Cards show a preview image, recipe name, algorithm/style, score, tags, palette, profile compatibility, analytics when reuse data exists, and the replay command. Filters support tag, algorithm, style, profile bucket, minimum score, and favorites. Favorites are stored in browser `localStorage` only.
 
 Each recipe card can export a single JSON file, copy an apply command, or copy a compact recipe snippet. The section also supports downloading the full recipe catalog JSON.
+
+## Production hardening notes
+
+### Local generation modes
+
+- Default daily-style generation: `python -m src.generate` reads `config/settings.json`, scans `sources/`, writes images under `output/`, logs under `logs/`, and mirrors dashboard JSON into `docs/data/`.
+- Deterministic local generation: add `--seed 12345` (or set `run.seed` in config) to make adaptive candidate generation reproducible. Omitting the seed keeps the default GitHub Actions behavior entropy-based.
+- Recipe generation: `python -m src.generate --recipe <recipe-id>` applies a promoted recipe to current sources. Use `--recipe-file /path/to/recipes.json` for a custom catalog.
+- Replay generation: `python -m src.generate --replay-run-id <run-id>` or `--replay-run-log <file>` re-renders a previous run from stored params and grain seeds.
+
+### External sources and path handling
+
+`--sources`, `--output`, `--logs`, and `--docs-data` accept either repo-relative or absolute paths. Source metadata remains repo-relative for files under the repository. External source files are recorded with deterministic portable keys in the form `external/<sha>/<filename>` so analytics and dashboard JSON do not crash or expose machine-specific absolute paths.
+
+### Performance knobs
+
+The `run` config supports guardrails for large inputs:
+
+- `max_working_dimension`: shared working-size cap when a more specific dimension is not set.
+- `candidate_preview_dimension`: downsample size used for source profiling.
+- `candidate_scoring_dimension`: downsample size used when rendering/scoring candidate previews.
+- `save_full_resolution_outputs`: documented intent for preserving final full-resolution outputs; the current default path saves selected finals at original source size while avoiding full-size renders for every candidate.
+
+Run summaries include `timings.source_profile_seconds`, `timings.candidate_render_score_seconds`, `timings.final_render_save_seconds`, and `timings.total_run_seconds`.
+
+### Recommended local checks
+
+```bash
+python -m pytest -q
+python -m ruff check .
+python -m compileall -q src tests
+python -m src.build_site --site /tmp/daily-color-site
+python -m src.generate --sources sources --output /tmp/dcl-output --logs /tmp/dcl-logs --docs-data /tmp/dcl-docs --seed 123
+```

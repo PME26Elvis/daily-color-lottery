@@ -33,8 +33,15 @@ def sample_ranges(ranges: dict[str, Any]) -> dict[str, Any]:
     return sampled
 
 
-def random_metadata() -> dict[str, Any]:
+def random_metadata(seed: int | None = None) -> dict[str, Any]:
+    if seed is not None:
+        return {
+            "random_source": "deterministic_seed",
+            "seed": seed,
+            "deterministic": True,
+        }
     return {
         "random_source": "os_entropy",
         "run_nonce": token_hex(16),
+        "deterministic": False,
     }

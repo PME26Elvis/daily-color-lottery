@@ -3,15 +3,16 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
+import time
 from pathlib import Path
 from typing import Any
 
 from src.grading import score_image
 from src.image_ops import dominant_palette_hex, grade_image, image_profile, open_rgb
 from src.algorithms import generate_candidates, select_diverse_candidates
-from src.randomness import numpy_seed, random_metadata, sample_ranges
+from src.randomness import numpy_seed, random_metadata
 from src.analytics import write_style_analytics
-from src.recipes import load_recipe, write_recipe_catalog
+from src.recipes import load_recipe, validate_recipe, write_recipe_catalog
 from src.source_tracking import build_inventory, diff_inventory, merge_inventory
 from src.utils import (
     append_jsonl,
@@ -20,7 +21,9 @@ from src.utils import (
     iter_source_images,
     load_jsonl,
     read_json,
-    rel,
+    resolve_config_path,
+    safe_rel,
+    downsample_image,
     run_id_from_dt,
     slugify,
     utc_now,
@@ -40,9 +43,23 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--replay-run-log", default=None, help="Replay a run from a run summary JSON file"
     )
-    parser.add_argument("--replay-run-id", default=None, help="Replay a run_id from logs/runs.jsonl")
-    parser.add_argument("--recipe", default=None, help="Apply a reusable recipe id to all current sources")
-    parser.add_argument("--recipe-file", default=None, help="Recipe catalog JSON path (defaults to logs/recipes.json, then docs/data/recipes.json)")
+    parser.add_argument(
+        "--replay-run-id", default=None, help="Replay a run_id from logs/runs.jsonl"
+    )
+    parser.add_argument(
+        "--recipe", default=None, help="Apply a reusable recipe id to all current sources"
+    )
+    parser.add_argument(
+        "--recipe-file",
+        default=None,
+        help="Recipe catalog JSON path (defaults to logs/recipes.json, then docs/data/recipes.json)",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Deterministic seed for local reproducibility",
+    )
     return parser.parse_args()
 
 
@@ -55,7 +72,9 @@ def save_jpeg(img, path: Path, quality: int) -> None:
     img.save(path, format="JPEG", quality=quality, optimize=True)
 
 
-def update_leaderboard(existing: list[dict[str, Any]], outputs: list[dict[str, Any]], limit: int) -> list[dict[str, Any]]:
+def update_leaderboard(
+    existing: list[dict[str, Any]], outputs: list[dict[str, Any]], limit: int
+) -> list[dict[str, Any]]:
     rows = existing + outputs
     rows = sorted(rows, key=lambda x: float(x.get("score", {}).get("score", 0.0)), reverse=True)
     seen = set()
@@ -150,7 +169,7 @@ def replay_outputs(
                 {
                     "mode": "replay",
                     "replay_of_run_id": original_run_id,
-                    "output_path": rel(output_path, root),
+                    "output_path": safe_rel(output_path, root),
                     "latest_path": None,
                     "score": score,
                     "width": original.width,
@@ -173,7 +192,9 @@ def replay_outputs(
         )
         if all_outputs
         else None,
-        "best_output": max(all_outputs, key=lambda x: float(x["score"]["score"])) if all_outputs else None,
+        "best_output": max(all_outputs, key=lambda x: float(x["score"]["score"]))
+        if all_outputs
+        else None,
         "errors": errors,
         "outputs": all_outputs,
     }
@@ -182,7 +203,6 @@ def replay_outputs(
     print(f"mode=replay run_id={original_run_id}")
     print(f"sources={len(source_paths)} outputs={len(all_outputs)} errors={len(errors)}")
     return summary
-
 
 
 def generate_recipe_outputs(
@@ -199,6 +219,7 @@ def generate_recipe_outputs(
     created_at: str,
     regenerate_grain: bool = True,
 ) -> dict[str, Any]:
+    recipe = validate_recipe(recipe)
     latest_dir = output_dir / "latest"
     if latest_dir.exists():
         shutil.rmtree(latest_dir)
@@ -211,7 +232,7 @@ def generate_recipe_outputs(
     errors: list[dict[str, Any]] = []
     source_paths = iter_source_images(sources_dir)
     for index, source_path in enumerate(source_paths, start=1):
-        source_rel = rel(source_path, root)
+        source_rel = safe_rel(source_path, root)
         source_slug = slugify(source_path.stem)
         source_latest_dir = latest_dir / source_slug
         source_archive_dir = output_dir / "recipes" / run_date / recipe_slug / source_slug
@@ -250,8 +271,8 @@ def generate_recipe_outputs(
                 "params": params,
                 "grain_seed_hex": hex(seed),
                 "grain_seed_policy": "regenerate" if regenerate_grain else "fixed",
-                "output_path": rel(archive_path, root),
-                "latest_path": rel(latest_path, root),
+                "output_path": safe_rel(archive_path, root),
+                "latest_path": safe_rel(latest_path, root),
                 "score": score,
                 "palette": palette,
                 "width": original.width,
@@ -259,7 +280,9 @@ def generate_recipe_outputs(
             }
             all_outputs.append(row)
         except Exception as exc:
-            errors.append({"source": source_rel, "recipe_id": recipe.get("recipe_id"), "error": repr(exc)})
+            errors.append(
+                {"source": source_rel, "recipe_id": recipe.get("recipe_id"), "error": repr(exc)}
+            )
     if all_outputs:
         best = max(all_outputs, key=lambda x: float(x["score"]["score"]))
         for row in all_outputs:
@@ -273,8 +296,14 @@ def generate_recipe_outputs(
         "created_at": created_at,
         "source_count": len(source_paths),
         "outputs_generated": len(all_outputs),
-        "average_score": round(sum(float(o["score"]["score"]) for o in all_outputs) / len(all_outputs), 2) if all_outputs else None,
-        "best_output": max(all_outputs, key=lambda x: float(x["score"]["score"])) if all_outputs else None,
+        "average_score": round(
+            sum(float(o["score"]["score"]) for o in all_outputs) / len(all_outputs), 2
+        )
+        if all_outputs
+        else None,
+        "best_output": max(all_outputs, key=lambda x: float(x["score"]["score"]))
+        if all_outputs
+        else None,
         "errors": errors,
         "outputs": all_outputs,
     }
@@ -284,15 +313,16 @@ def generate_recipe_outputs(
     print(f"sources={len(source_paths)} outputs={len(all_outputs)} errors={len(errors)}")
     return summary
 
+
 def main() -> int:
     args = parse_args()
     root = ROOT
     config = load_config(root / args.config)
     paths = config["paths"]
-    sources_dir = root / (args.sources or paths["sources"])
-    output_dir = root / (args.output or paths["output"])
-    logs_dir = root / (args.logs or paths["logs"])
-    docs_data_dir = root / (args.docs_data or paths["docs_data"])
+    sources_dir = resolve_config_path(args.sources, paths["sources"], root)
+    output_dir = resolve_config_path(args.output, paths["output"], root)
+    logs_dir = resolve_config_path(args.logs, paths["logs"], root)
+    docs_data_dir = resolve_config_path(args.docs_data, paths["docs_data"], root)
 
     ensure_dir(sources_dir)
     ensure_dir(output_dir)
@@ -328,13 +358,23 @@ def main() -> int:
             recipe_path = docs_data_dir / "recipes.json"
         recipe = load_recipe(args.recipe, recipe_path)
         summary = generate_recipe_outputs(
-            root=root, sources_dir=sources_dir, output_dir=output_dir, logs_dir=logs_dir,
-            recipe=recipe, run_id=run_id, run_date=run_date, quality=quality, weights=weights,
-            created_at=now.isoformat(), regenerate_grain=bool(config.get("recipes", {}).get("regenerate_grain", True)),
+            root=root,
+            sources_dir=sources_dir,
+            output_dir=output_dir,
+            logs_dir=logs_dir,
+            recipe=recipe,
+            run_id=run_id,
+            run_date=run_date,
+            quality=quality,
+            weights=weights,
+            created_at=now.isoformat(),
+            regenerate_grain=bool(config.get("recipes", {}).get("regenerate_grain", True)),
         )
         runs = compact_runs(load_jsonl(logs_dir / "runs.jsonl"))
         leaderboard_path = logs_dir / "leaderboard.json"
-        leaderboard = update_leaderboard(read_json(leaderboard_path, []), summary["outputs"], leaderboard_limit)
+        leaderboard = update_leaderboard(
+            read_json(leaderboard_path, []), summary["outputs"], leaderboard_limit
+        )
         write_json(leaderboard_path, leaderboard)
         write_json(docs_data_dir / "latest-run.json", summary)
         write_json(docs_data_dir / "runs.json", runs)
@@ -342,7 +382,19 @@ def main() -> int:
         write_style_analytics(logs_dir, docs_data_dir)
         return 0
 
-    run_meta = random_metadata()
+    run_seed = args.seed if args.seed is not None else config.get("run", {}).get("seed")
+    run_seed = int(run_seed) if run_seed is not None else None
+    run_meta = random_metadata(run_seed)
+    timings = {
+        "source_profile_seconds": 0.0,
+        "candidate_render_score_seconds": 0.0,
+        "final_render_save_seconds": 0.0,
+    }
+    total_started = time.perf_counter()
+    run_cfg = config.get("run", {})
+    max_working_dimension = int(run_cfg.get("max_working_dimension", 0) or 0)
+    profile_dimension = int(run_cfg.get("candidate_preview_dimension", max_working_dimension) or 0)
+    scoring_dimension = int(run_cfg.get("candidate_scoring_dimension", max_working_dimension) or 0)
     previous_inventory_path = logs_dir / "source_inventory.json"
     previous_inventory = read_json(previous_inventory_path, {})
     active_previous = {
@@ -364,7 +416,7 @@ def main() -> int:
     all_outputs = []
     errors = []
     for source_path in source_paths:
-        source_rel = rel(source_path, root)
+        source_rel = safe_rel(source_path, root)
         source_slug = slugify(source_path.stem)
         source_latest_dir = latest_dir / source_slug
         source_archive_dir = output_dir / "archive" / run_date / source_slug
@@ -377,18 +429,33 @@ def main() -> int:
             errors.append({"source": source_rel, "error": repr(exc)})
             continue
 
-        source_profile = image_profile(original)
+        profile_started = time.perf_counter()
+        profile_img = downsample_image(original, profile_dimension)
+        source_profile = image_profile(profile_img)
+        timings["source_profile_seconds"] += time.perf_counter() - profile_started
+        scoring_img = downsample_image(original, scoring_dimension)
         candidate_pool = []
         algorithm_cfg = config.get("algorithms", {})
-        for candidate in generate_candidates(styles, source_profile, algorithm_cfg):
+        for candidate in generate_candidates(styles, source_profile, algorithm_cfg, seed=run_seed):
             try:
-                out_img = grade_image(original, candidate["params"], int(candidate["grain_seed"]))
+                score_started = time.perf_counter()
+                out_img = grade_image(
+                    scoring_img, candidate["params"], int(candidate["grain_seed"])
+                )
                 score = score_image(out_img, weights)
                 palette = dominant_palette_hex(out_img)
+                timings["candidate_render_score_seconds"] += time.perf_counter() - score_started
                 candidate.update({"score": score, "palette": palette})
                 candidate_pool.append(candidate)
             except Exception as exc:
-                errors.append({"source": source_rel, "style": candidate.get("style"), "algorithm": candidate.get("algorithm"), "error": repr(exc)})
+                errors.append(
+                    {
+                        "source": source_rel,
+                        "style": candidate.get("style"),
+                        "algorithm": candidate.get("algorithm"),
+                        "error": repr(exc),
+                    }
+                )
 
         final_count = int(config["run"].get("outputs_per_source", 5))
         selected_candidates = select_diverse_candidates(candidate_pool, final_count)
@@ -399,6 +466,7 @@ def main() -> int:
             params = candidate["params"]
             seed = int(candidate["grain_seed"])
             try:
+                final_started = time.perf_counter()
                 out_img = grade_image(original, params, seed)
                 score = candidate.get("score") or score_image(out_img, weights)
                 palette = candidate.get("palette") or dominant_palette_hex(out_img)
@@ -421,25 +489,44 @@ def main() -> int:
                     "source_profile": source_profile,
                     "source_profile_bucket": source_profile.get("profile_bucket"),
                     "source_profile_tags": source_profile.get("profile_tags", []),
-                    "selection_reason": candidate.get("selection_reason", "Selected by quality/diversity ranking"),
+                    "selection_reason": candidate.get(
+                        "selection_reason", "Selected by quality/diversity ranking"
+                    ),
                     "candidate_rank": index,
                     "diversity_score": candidate.get("diversity_score", 0),
-                    "overall_selection_score": candidate.get("overall_selection_score", score.get("score", 0)),
-                    "badges": list(dict.fromkeys(candidate.get("tags", []) + (["Best for source"] if index == 1 else []))),
+                    "overall_selection_score": candidate.get(
+                        "overall_selection_score", score.get("score", 0)
+                    ),
+                    "badges": list(
+                        dict.fromkeys(
+                            candidate.get("tags", []) + (["Best for source"] if index == 1 else [])
+                        )
+                    ),
                     "index": index,
-                    "params": {k: round(float(v), 6) if isinstance(v, (int, float)) else v for k, v in params.items()},
+                    "params": {
+                        k: round(float(v), 6) if isinstance(v, (int, float)) else v
+                        for k, v in params.items()
+                    },
                     "grain_seed_hex": hex(seed),
-                    "output_path": rel(archive_path, root),
-                    "latest_path": rel(latest_path, root),
+                    "output_path": safe_rel(archive_path, root),
+                    "latest_path": safe_rel(latest_path, root),
                     "score": score,
                     "palette": palette,
                     "width": original.width,
                     "height": original.height,
                 }
+                timings["final_render_save_seconds"] += time.perf_counter() - final_started
                 source_outputs.append(row)
                 all_outputs.append(row)
             except Exception as exc:
-                errors.append({"source": source_rel, "style": style_name, "algorithm": candidate.get("algorithm"), "error": repr(exc)})
+                errors.append(
+                    {
+                        "source": source_rel,
+                        "style": style_name,
+                        "algorithm": candidate.get("algorithm"),
+                        "error": repr(exc),
+                    }
+                )
         if source_outputs:
             best = max(source_outputs, key=lambda x: float(x["score"]["score"]))
             for row in source_outputs:
@@ -455,31 +542,44 @@ def main() -> int:
         "outputs_generated": len(all_outputs),
         "styles": [style["name"] for style in styles],
         "algorithms": config.get("algorithms", {}),
-        "source_profiles": {o["source_path"]: o.get("source_profile") for o in all_outputs if o.get("source_profile")},
+        "source_profiles": {
+            o["source_path"]: o.get("source_profile")
+            for o in all_outputs
+            if o.get("source_profile")
+        },
         "average_score": round(
             sum(float(o["score"]["score"]) for o in all_outputs) / len(all_outputs), 2
         )
         if all_outputs
         else None,
-        "best_output": max(all_outputs, key=lambda x: float(x["score"]["score"])) if all_outputs else None,
+        "best_output": max(all_outputs, key=lambda x: float(x["score"]["score"]))
+        if all_outputs
+        else None,
         "source_events": source_events,
         "errors": errors,
         "outputs": all_outputs,
     }
+
+    timings["total_run_seconds"] = time.perf_counter() - total_started
+    summary["timings"] = {key: round(value, 4) for key, value in timings.items()}
 
     append_jsonl(logs_dir / "runs.jsonl", summary)
     write_json(logs_dir / "latest_run.json", summary)
 
     runs = compact_runs(load_jsonl(logs_dir / "runs.jsonl"))
     leaderboard_path = logs_dir / "leaderboard.json"
-    leaderboard = update_leaderboard(read_json(leaderboard_path, []), all_outputs, leaderboard_limit)
+    leaderboard = update_leaderboard(
+        read_json(leaderboard_path, []), all_outputs, leaderboard_limit
+    )
     write_json(leaderboard_path, leaderboard)
 
     write_json(docs_data_dir / "latest-run.json", summary)
     write_json(docs_data_dir / "runs.json", runs)
     write_json(docs_data_dir / "leaderboard.json", leaderboard)
     write_json(docs_data_dir / "source-inventory.json", merged_inventory)
-    write_json(docs_data_dir / "source-events.json", load_jsonl(logs_dir / "source_events.jsonl")[-200:])
+    write_json(
+        docs_data_dir / "source-events.json", load_jsonl(logs_dir / "source_events.jsonl")[-200:]
+    )
     write_recipe_catalog(logs_dir, docs_data_dir, summary)
     write_style_analytics(logs_dir, docs_data_dir)
 

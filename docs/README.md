@@ -27,3 +27,11 @@ Rows in `data/latest-run.json` should always provide `source_path`, `style`, `pa
 The static dashboard reads reusable color presets from `docs/data/recipes.json` and optional reuse statistics from `docs/data/recipe-analytics.json`. Favorites are client-side only and are persisted in `localStorage` under `favoriteRecipes`.
 
 Recipe cards expose preview images, tags, palette chips, source profile compatibility, score summaries, copyable `python -m src.generate --recipe <recipe-id>` commands, single-recipe JSON export, compact snippet copy, and full-catalog download.
+
+## Dashboard data contracts and fallbacks
+
+The static dashboard is dependency-free and loads JSON files from `docs/data/`. Required files are `latest-run.json`, `runs.json`, `leaderboard.json`, `style-analytics.json`, `source-analytics.json`, and `algorithm-analytics.json`; recipe files are optional but enabled when `recipes.json` or `recipe-analytics.json` exists.
+
+Output rows are backward compatible with older runs. The UI tolerates missing `algorithm`, `source_profile_tags`, `selection_reason`, `badges`, `palette`, `recipe_id`, and profile-bucket metadata by displaying empty filters, `unknown` labels, or compact fallback text instead of throwing errors. A data health panel appears near the top of the page and reports absent or malformed JSON files.
+
+Recipe catalog entries should include `recipe_id`, `style`, `params`, optional `tags`, optional `palette`, optional `score_summary`, and a copyable `replay_command` such as `python -m src.generate --recipe <recipe-id>`.

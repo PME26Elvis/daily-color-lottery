@@ -3,8 +3,8 @@ from pathlib import Path
 from PIL import Image
 
 from src.generate import generate_recipe_outputs
-from src.recipes import promote_recipes_from_run, stable_recipe_id
-from src.utils import read_json
+from src.recipes import load_recipe, promote_recipes_from_run, stable_recipe_id, validate_recipe
+from src.utils import read_json, write_json
 
 
 def sample_output(path="out/a.jpg", score=91, algorithm="palette_cinematic", bucket="colorful"):
@@ -41,7 +41,11 @@ def test_recipe_promotion_and_deduplication_from_synthetic_run():
     duplicate["output_path"] = "out/duplicate.jpg"
     other = sample_output("out/b.jpg", 88, "monochrome_editorial", "low-light")
     other["source_path"] = "sources/b.png"
-    summary = {"created_at": "2026-07-03T00:00:00+00:00", "best_output": first, "outputs": [first, duplicate, other]}
+    summary = {
+        "created_at": "2026-07-03T00:00:00+00:00",
+        "best_output": first,
+        "outputs": [first, duplicate, other],
+    }
 
     recipes = promote_recipes_from_run(summary)
     recipe_ids = [recipe["recipe_id"] for recipe in recipes]
@@ -55,7 +59,9 @@ def test_recipe_application_mode_with_tiny_fixture_image(tmp_path):
     sources = tmp_path / "sources"
     sources.mkdir()
     Image.new("RGB", (8, 8), (120, 80, 40)).save(sources / "tiny.png")
-    recipe = promote_recipes_from_run({"best_output": sample_output(), "outputs": [sample_output()]})[0]
+    recipe = promote_recipes_from_run(
+        {"best_output": sample_output(), "outputs": [sample_output()]}
+    )[0]
 
     summary = generate_recipe_outputs(
         root=tmp_path,
@@ -87,3 +93,34 @@ def test_old_run_rows_without_algorithm_metadata_promote_with_fallbacks():
     recipes = promote_recipes_from_run({"best_output": old, "outputs": [old]})
     assert recipes[0]["algorithm"] == "style_range"
     assert recipes[0]["source_profile_bucket"] == "unknown"
+
+
+def test_load_recipe_custom_catalog_and_invalid_id(tmp_path):
+    recipe = {
+        "recipe_id": "custom",
+        "style": "clean_bright",
+        "params": {"contrast": 1, "grain": 0.0},
+        "grain_seed_policy": {"mode": "regenerate"},
+    }
+    catalog = tmp_path / "catalog.json"
+    write_json(catalog, {"recipes": [recipe]})
+
+    assert load_recipe("custom", catalog)["recipe_id"] == "custom"
+    try:
+        load_recipe("missing", catalog)
+    except ValueError as exc:
+        assert "Recipe id not found" in str(exc)
+    else:
+        raise AssertionError("missing recipe id should fail")
+
+
+def test_validate_recipe_accepts_fixed_grain_policy():
+    recipe = validate_recipe(
+        {
+            "recipe_id": "fixed",
+            "style": "clean_bright",
+            "params": {"contrast": 1},
+            "grain_seed_policy": {"mode": "fixed", "source_seed_hex": "0x7b"},
+        }
+    )
+    assert recipe["grain_seed_policy"]["mode"] == "fixed"

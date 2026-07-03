@@ -50,7 +50,12 @@ def iter_run_outputs(runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def _source_key(output: dict[str, Any]) -> str:
-    return str(output.get("source_path") or output.get("source_sha256") or output.get("source_name") or "unknown")
+    return str(
+        output.get("source_path")
+        or output.get("source_sha256")
+        or output.get("source_name")
+        or "unknown"
+    )
 
 
 def build_source_analytics(runs: list[dict[str, Any]]) -> dict[str, Any]:
@@ -131,7 +136,12 @@ def build_style_analytics(runs: list[dict[str, Any]]) -> dict[str, Any]:
         recent_scores = []
         for row, score in scored:
             run_date = _parse_date(row.get("run_date"))
-            if score is not None and recent_start and run_date and recent_start <= run_date <= latest_date:
+            if (
+                score is not None
+                and recent_start
+                and run_date
+                and recent_start <= run_date <= latest_date
+            ):
                 recent_scores.append(score)
         best_row, best_score = max(scored, key=lambda item: item[1] if item[1] is not None else -1)
         styles.append(
@@ -171,9 +181,13 @@ def build_style_analytics(runs: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-
 def _profile_bucket(output: dict[str, Any]) -> str:
-    return str(output.get("source_profile_bucket") or (output.get("source_profile") or {}).get("profile_bucket") or "unknown")
+    return str(
+        output.get("source_profile_bucket")
+        or (output.get("source_profile") or {}).get("profile_bucket")
+        or "unknown"
+    )
+
 
 def build_algorithm_analytics(runs: list[dict[str, Any]]) -> dict[str, Any]:
     outputs = iter_run_outputs(runs)
@@ -190,21 +204,53 @@ def build_algorithm_analytics(runs: list[dict[str, Any]]) -> dict[str, Any]:
         by_bucket[_profile_bucket(output)].append(output)
 
     def rows_for(groups, key_name):
-        rows=[]
+        rows = []
         for key, items in groups.items():
-            scored=[(row, _score_value(row)) for row in items]
-            scores=[score for _row, score in scored if score is not None]
-            recent=[]
+            scored = [(row, _score_value(row)) for row in items]
+            scores = [score for _row, score in scored if score is not None]
+            recent = []
             for row, score in scored:
-                rd=_parse_date(row.get("run_date"))
+                rd = _parse_date(row.get("run_date"))
                 if score is not None and recent_start and rd and recent_start <= rd <= latest_date:
                     recent.append(score)
-            best_row,best_score=max(scored, key=lambda item: item[1] if item[1] is not None else -1)
-            rows.append({key_name:key,"count":len(scores),"usage_count":len(scores),"average_score":round(sum(scores)/len(scores),2),"best_score":round(float(best_score),2),"daily_wins":sum(1 for row in items if row.get("daily_win")),"source_wins":sum(1 for row in items if row.get("best_for_source_today")),"recent_7_day_average":round(sum(recent)/len(recent),2) if recent else None,"best_output":best_row})
-        rows.sort(key=lambda row:(float(row["average_score"]), float(row["best_score"]), int(row["source_wins"]), str(row[key_name])), reverse=True)
-        for i,row in enumerate(rows,1): row["rank"]=i
+            best_row, best_score = max(
+                scored, key=lambda item: item[1] if item[1] is not None else -1
+            )
+            rows.append(
+                {
+                    key_name: key,
+                    "count": len(scores),
+                    "usage_count": len(scores),
+                    "average_score": round(sum(scores) / len(scores), 2),
+                    "best_score": round(float(best_score), 2),
+                    "daily_wins": sum(1 for row in items if row.get("daily_win")),
+                    "source_wins": sum(1 for row in items if row.get("best_for_source_today")),
+                    "recent_7_day_average": round(sum(recent) / len(recent), 2) if recent else None,
+                    "best_output": best_row,
+                }
+            )
+        rows.sort(
+            key=lambda row: (
+                float(row["average_score"]),
+                float(row["best_score"]),
+                int(row["source_wins"]),
+                str(row[key_name]),
+            ),
+            reverse=True,
+        )
+        for i, row in enumerate(rows, 1):
+            row["rank"] = i
         return rows
-    return {"run_count":len(runs),"output_count":sum(len(v) for v in by_algorithm.values()),"latest_run_date":latest_date.isoformat() if latest_date else None,"recent_window_days":7,"algorithms":rows_for(by_algorithm,"algorithm"),"profile_buckets":rows_for(by_bucket,"profile_bucket")}
+
+    return {
+        "run_count": len(runs),
+        "output_count": sum(len(v) for v in by_algorithm.values()),
+        "latest_run_date": latest_date.isoformat() if latest_date else None,
+        "recent_window_days": 7,
+        "algorithms": rows_for(by_algorithm, "algorithm"),
+        "profile_buckets": rows_for(by_bucket, "profile_bucket"),
+    }
+
 
 def read_compacted_runs(path: Path, limit: int = 365) -> list[dict[str, Any]]:
     return load_jsonl(path)[-limit:]

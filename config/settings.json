@@ -4,7 +4,11 @@
     "random_source": "os_entropy",
     "timezone_label": "UTC",
     "output_quality": 92,
-    "output_format": "JPEG"
+    "output_format": "JPEG",
+    "max_working_dimension": 900,
+    "candidate_preview_dimension": 512,
+    "candidate_scoring_dimension": 640,
+    "save_full_resolution_outputs": true
   },
   "paths": {
     "sources": "sources",
