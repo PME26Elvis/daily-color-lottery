@@ -14,6 +14,10 @@ const leaderboardFilters = {
   runDate: "all",
   algorithm: "all",
   profileBucket: "all",
+  minScore: "",
+  badge: "all",
+  profileTag: "all",
+  sort: "score",
 };
 
 async function loadJson(path, fallback) {
@@ -38,12 +42,18 @@ function sourceLabel(item) {
   return item?.source_name || item?.source_path || "Unknown source";
 }
 
+function profileTagsForFilter(output) {
+  return output?.source_profile_tags || output?.source_profile?.tags || [];
+}
+
 function collectLeaderboardFilterOptions() {
   const styles = new Set();
   const sources = new Map();
   const runDates = new Set();
   const algorithms = new Set();
   const profileBuckets = new Set();
+  const badges = new Set();
+  const profileTags = new Set();
 
   const collectOutput = (output) => {
     if (!output) return;
@@ -53,6 +63,8 @@ function collectLeaderboardFilterOptions() {
     if (output.run_date) runDates.add(output.run_date);
     if (output.algorithm) algorithms.add(output.algorithm);
     if (output.source_profile_bucket || output.source_profile?.profile_bucket) profileBuckets.add(output.source_profile_bucket || output.source_profile.profile_bucket);
+    for (const badge of output.badges || []) badges.add(badge);
+    for (const tag of profileTagsForFilter(output)) profileTags.add(tag);
   };
 
   for (const row of data.leaderboard || []) collectOutput(row);
@@ -71,6 +83,8 @@ function collectLeaderboardFilterOptions() {
     runDates: [...runDates].sort((a, b) => b.localeCompare(a)),
     algorithms: [...algorithms].sort((a, b) => a.localeCompare(b)),
     profileBuckets: [...profileBuckets].sort((a, b) => a.localeCompare(b)),
+    badges: [...badges].sort((a, b) => a.localeCompare(b)),
+    profileTags: [...profileTags].sort((a, b) => a.localeCompare(b)),
   };
 }
 
@@ -115,12 +129,14 @@ function populateSelect(selector, options, allLabel) {
 }
 
 function renderLeaderboardFilters() {
-  const { styles, sources, runDates, algorithms, profileBuckets } = collectLeaderboardFilterOptions();
+  const { styles, sources, runDates, algorithms, profileBuckets, badges, profileTags } = collectLeaderboardFilterOptions();
   populateSelect("#filter-style", styles.map((style) => optionHtml(style, style)), "All styles");
   populateSelect("#filter-source", sources.map(([value, label]) => optionHtml(value, label)), "All sources");
   populateSelect("#filter-run-date", runDates.map((date) => optionHtml(date, date)), "All dates");
   populateSelect("#filter-algorithm", algorithms.map((algorithm) => optionHtml(algorithm, algorithm)), "All algorithms");
   populateSelect("#filter-profile", profileBuckets.map((bucket) => optionHtml(bucket, bucket)), "All profiles");
+  populateSelect("#filter-badge", badges.map((badge) => optionHtml(badge, badge)), "All badges");
+  populateSelect("#filter-profile-tag", profileTags.map((tag) => optionHtml(tag, tag)), "All tags");
 }
 
 function setupLeaderboardFilters() {
@@ -132,7 +148,20 @@ function setupLeaderboardFilters() {
     ["#filter-run-date", "runDate"],
     ["#filter-algorithm", "algorithm"],
     ["#filter-profile", "profileBucket"],
+    ["#filter-badge", "badge"],
+    ["#filter-profile-tag", "profileTag"],
+    ["#filter-sort", "sort"],
   ];
+
+  const minScore = document.querySelector("#filter-min-score");
+  if (minScore) {
+    minScore.value = leaderboardFilters.minScore;
+    minScore.addEventListener("input", (event) => { leaderboardFilters.minScore = event.target.value; renderLeaderboard(); });
+  }
+  document.querySelector("#filter-reset")?.addEventListener("click", () => {
+    Object.assign(leaderboardFilters, { style: "all", source: "all", runDate: "all", algorithm: "all", profileBucket: "all", minScore: "", badge: "all", profileTag: "all", sort: "score" });
+    renderLeaderboardFilters(); setupLeaderboardFilters(); renderLeaderboard();
+  });
 
   for (const [selector, key] of controls) {
     const select = document.querySelector(selector);
@@ -198,6 +227,169 @@ function scoreBreakdownHtml(row) {
 
   if (!bars) return "";
   return `<div class="score-breakdown" aria-label="Score component breakdown">${bars}</div>`;
+}
+
+const SCORE_COMPONENTS = [
+  ["exposure_score", "Exposure", "How close exposure is to a balanced target."],
+  ["contrast_score", "Contrast", "Global tonal separation and punch."],
+  ["saturation_score", "Saturation", "Color intensity without oversaturation."],
+  ["clipping_score", "Clipping", "Penalty when shadows/highlights are crushed."],
+  ["sharpness_score", "Sharpness", "Perceived detail retention."],
+  ["palette_harmony_score", "Palette harmony", "How cohesive the dominant colors are."],
+  ["dynamic_range_score", "Dynamic range", "Spread of useful luminance values."],
+  ["mood_distinctiveness_score", "Mood distinctiveness", "How distinct the look is from neutral grading."],
+  ["artifact_risk_score", "Artifact risk", "Lower risk of generated artifacts or harsh edits."],
+];
+
+const ALGORITHM_DESCRIPTIONS = {
+  style_range: "Baseline style sampler using configured parameter ranges.",
+  adaptive_auto_enhance: "Source-aware auto enhancement tuned from luminance, saturation, clipping, and contrast profile signals.",
+  palette_cinematic: "Palette-aware cinematic grading that leans into source dominant colors.",
+  diversity_explorer: "Exploratory candidate sampler that favors distinct looks across the run.",
+  monochrome_editorial: "Editorial monochrome or low-color treatment for graphic contrast and mood.",
+};
+
+const studioState = {
+  source: "",
+  output: "",
+  compare: "",
+  mode: "slider",
+  algorithms: [],
+  components: ["exposure_score", "contrast_score", "saturation_score", "clipping_score", "sharpness_score"],
+  compact: false,
+};
+
+function outputId(row) {
+  return row?.output_path || row?.latest_path || `${sourceKey(row)}::${row?.style || "unknown"}::${row?.index || 0}`;
+}
+
+function latestOutputs() {
+  return data.latest?.outputs || [];
+}
+
+function loadStudioPreferences() {
+  try {
+    const prefs = JSON.parse(localStorage.getItem("experimentStudioPrefs") || "{}");
+    if (prefs.mode) studioState.mode = prefs.mode;
+    if (Array.isArray(prefs.algorithms)) studioState.algorithms = prefs.algorithms;
+    if (Array.isArray(prefs.components)) studioState.components = prefs.components;
+    if (typeof prefs.compact === "boolean") studioState.compact = prefs.compact;
+  } catch {}
+}
+
+function saveStudioPreferences() {
+  localStorage.setItem("experimentStudioPrefs", JSON.stringify({
+    mode: studioState.mode,
+    algorithms: studioState.algorithms,
+    components: studioState.components,
+    compact: studioState.compact,
+  }));
+}
+
+function parseStudioHash() {
+  if (!location.hash.startsWith("#studio")) return;
+  const query = location.hash.split("?")[1] || "";
+  const params = new URLSearchParams(query);
+  for (const key of ["source", "output", "compare", "mode"]) {
+    if (params.has(key)) studioState[key] = params.get(key) || "";
+  }
+}
+
+function writeStudioHash() {
+  const params = new URLSearchParams();
+  for (const key of ["source", "output", "compare", "mode"]) if (studioState[key]) params.set(key, studioState[key]);
+  history.replaceState(null, "", `#studio?${params.toString()}`);
+}
+
+function selectedStudioRows() {
+  const rows = latestOutputs();
+  const sourceRows = rows.filter((row) => !studioState.source || sourceKey(row) === studioState.source);
+  const selected = sourceRows.find((row) => outputId(row) === studioState.output) || sourceRows[0] || rows[0] || {};
+  const compare = sourceRows.find((row) => outputId(row) === studioState.compare) || nearestCompetitor(selected, sourceRows) || sourceRows[1] || selected;
+  return { rows, sourceRows, selected, compare };
+}
+
+function nearestCompetitor(selected, rows) {
+  if (!selected) return null;
+  const selectedScore = Number(scoreValue(selected) || 0);
+  return (rows || [])
+    .filter((row) => outputId(row) !== outputId(selected))
+    .sort((a, b) => Math.abs(Number(scoreValue(a) || 0) - selectedScore) - Math.abs(Number(scoreValue(b) || 0) - selectedScore))[0] || null;
+}
+
+function profileTags(row) {
+  return row?.source_profile_tags || row?.source_profile?.tags || [];
+}
+
+function scoreComponentValue(row, key) {
+  const score = row?.score || {};
+  const aliases = { exposure_score: "exposure_balance", contrast_score: "contrast", saturation_score: "saturation_balance", sharpness_score: "detail" };
+  return score[key] ?? score[aliases[key]];
+}
+
+function componentChartHtml(row) {
+  const selected = SCORE_COMPONENTS.filter(([key]) => studioState.components.includes(key));
+  const bars = selected.map(([key, label, tip]) => {
+    const value = Number(scoreComponentValue(row, key));
+    if (!Number.isFinite(value)) return "";
+    const width = Math.max(0, Math.min(100, value));
+    return `<div class="studio-bar" title="${escapeHtml(tip)}"><span>${escapeHtml(label)}</span><svg viewBox="0 0 100 8" preserveAspectRatio="none"><rect width="100" height="8" rx="4"></rect><rect width="${width}" height="8" rx="4" class="fill"></rect></svg><b>${fmtScore(value)}</b></div>`;
+  }).filter(Boolean).join("");
+  return bars ? `<div class="studio-chart" aria-label="Selected score components">${bars}</div>` : `<p class="muted">No selected score components are available for this output.</p>`;
+}
+
+function replaySnippet(row) {
+  return JSON.stringify({ params: row?.params || {}, style: row?.style, grain_seed_hex: row?.grain_seed_hex, source_path: row?.source_path, algorithm: row?.algorithm || "style_range" }, null, 2);
+}
+
+function renderStudioComparison(selected, compare, sourceRows) {
+  const mode = studioState.mode;
+  if (mode === "grid") {
+    const gridRows = studioState.algorithms.length ? sourceRows.filter((row) => studioState.algorithms.includes(row.algorithm || "style_range")) : sourceRows;
+    return `<div class="studio-grid-compare">${(gridRows.length ? gridRows : sourceRows).map((row) => `<figure><img src="${row.latest_path || row.output_path}" alt="${escapeHtml(row.style || "Output")}"><figcaption>${escapeHtml(row.algorithm || row.style || "Output")} · ${fmtScore(scoreValue(row))}</figcaption></figure>`).join("")}</div>`;
+  }
+  if (mode === "side-by-side" || mode === "winner" || mode === "same-source") {
+    return `<div class="studio-side-by-side"><figure><img src="${selected.latest_path || selected.output_path}" alt="Selected output"><figcaption>Selected · ${escapeHtml(selected.style || "Output")}</figcaption></figure><figure><img src="${compare.latest_path || compare.output_path}" alt="Comparison output"><figcaption>Compare · ${escapeHtml(compare.style || "Output")}</figcaption></figure></div>`;
+  }
+  return `<div class="comparison studio-slider" style="--comparison-position: 50%"><img class="comparison-image comparison-image-base" src="${selected.source_path || sourceKey(selected)}" alt="Original source"><div class="comparison-overlay"><img class="comparison-image" src="${selected.latest_path || selected.output_path}" alt="Selected output"></div><div class="comparison-label comparison-label-original">Original</div><div class="comparison-label comparison-label-graded">Selected</div><div class="comparison-divider" aria-hidden="true"></div><input class="comparison-slider" type="range" min="0" max="100" value="50" aria-label="Compare original and selected output" oninput="this.parentElement.style.setProperty('--comparison-position', this.value + '%')" /></div>`;
+}
+
+function renderExperimentStudio() {
+  const root = document.querySelector("#experiment-studio-root");
+  if (!root) return;
+  const { rows, sourceRows, selected, compare } = selectedStudioRows();
+  if (!rows.length) { root.innerHTML = `<div class="empty">No latest run outputs are available for the studio yet.</div>`; return; }
+  if (!studioState.source) studioState.source = sourceKey(selected);
+  if (!studioState.output) studioState.output = outputId(selected);
+  const sources = bySource(rows);
+  const algorithms = [...new Set(rows.map((row) => row.algorithm || "style_range"))].sort();
+  const selectedAlgorithm = selected.algorithm || "style_range";
+  root.innerHTML = `<div class="studio-layout ${studioState.compact ? "compact" : ""}"><aside class="studio-controls"><label><span>Source</span><select id="studio-source">${sources.map(([key, group]) => optionHtml(key, sourceLabel(group[0]))).join("")}</select></label><label><span>Selected output</span><select id="studio-output">${sourceRows.map((row) => optionHtml(outputId(row), `${row.style || "Output"} · ${row.algorithm || "style_range"} · ${fmtScore(scoreValue(row))}`)).join("")}</select></label><label><span>Compare baseline</span><select id="studio-compare">${sourceRows.map((row) => optionHtml(outputId(row), `${row.style || "Output"} · ${fmtScore(scoreValue(row))}`)).join("")}</select></label><label><span>Mode</span><select id="studio-mode"><option value="slider">Before/after slider</option><option value="side-by-side">Side by side</option><option value="grid">Grid by algorithm</option><option value="winner">Winner vs nearest competitor</option><option value="same-source">Same source latest run</option></select></label><fieldset><legend>Favorite algorithms</legend>${algorithms.map((alg) => `<label class="check"><input type="checkbox" data-studio-algorithm="${escapeHtml(alg)}" ${studioState.algorithms.includes(alg) ? "checked" : ""}>${escapeHtml(alg)}</label>`).join("")}</fieldset><fieldset><legend>Score components</legend>${SCORE_COMPONENTS.map(([key, label, tip]) => `<label class="check" title="${escapeHtml(tip)}"><input type="checkbox" data-studio-component="${key}" ${studioState.components.includes(key) ? "checked" : ""}>${escapeHtml(label)}</label>`).join("")}</fieldset><label class="check"><input id="studio-compact" type="checkbox" ${studioState.compact ? "checked" : ""}>Compact cards</label></aside><div class="studio-workspace">${renderStudioComparison(selected, compare, sourceRows)}<section class="studio-inspector"><div><p class="eyebrow">Candidate explanation</p><h3>${escapeHtml(selected.style || "Selected output")}</h3><p>${escapeHtml(ALGORITHM_DESCRIPTIONS[selectedAlgorithm] || selected.algorithm_description || "Generated candidate from the adaptive color pipeline.")}</p></div><dl class="studio-meta"><div><dt>Algorithm</dt><dd>${escapeHtml(selectedAlgorithm)}</dd></div><div><dt>Selection reason</dt><dd>${escapeHtml(selected.selection_reason || (selected.best_for_source_today ? "Best-scoring output for this source today." : "Candidate retained in the latest generated set."))}</dd></div><div><dt>Candidate rank</dt><dd>${escapeHtml(selected.candidate_rank ?? "—")}</dd></div><div><dt>Diversity score</dt><dd>${fmtScore(selected.diversity_score)}</dd></div><div><dt>Selection score</dt><dd>${fmtScore(selected.overall_selection_score ?? scoreValue(selected))}</dd></div><div><dt>Profile tags</dt><dd>${escapeHtml(profileTags(selected).join(", ") || selected.source_profile_bucket || "—")}</dd></div></dl>${paletteHtml(selected, "Selected output dominant palette")}${componentChartHtml(selected)}<div class="studio-replay"><p class="eyebrow">Replay locally</p><code>python -m src.generate --replay-run-id ${escapeHtml(selected.run_id || data.latest?.run_id || "RUN_ID")}</code><pre>${escapeHtml(replaySnippet(selected))}</pre></div></section></div></div>`;
+  for (const [id, value] of [["#studio-source", studioState.source], ["#studio-output", studioState.output], ["#studio-compare", studioState.compare], ["#studio-mode", studioState.mode]]) { const el = document.querySelector(id); if (el) el.value = value; }
+  attachStudioEvents();
+}
+
+function attachStudioEvents() {
+  const rerender = () => { saveStudioPreferences(); writeStudioHash(); renderExperimentStudio(); };
+  document.querySelector("#studio-source")?.addEventListener("change", (e) => { studioState.source = e.target.value; studioState.output = ""; studioState.compare = ""; rerender(); });
+  document.querySelector("#studio-output")?.addEventListener("change", (e) => { studioState.output = e.target.value; rerender(); });
+  document.querySelector("#studio-compare")?.addEventListener("change", (e) => { studioState.compare = e.target.value; rerender(); });
+  document.querySelector("#studio-mode")?.addEventListener("change", (e) => { studioState.mode = e.target.value; rerender(); });
+  document.querySelector("#studio-compact")?.addEventListener("change", (e) => { studioState.compact = e.target.checked; rerender(); });
+  document.querySelectorAll("[data-studio-algorithm]").forEach((el) => el.addEventListener("change", () => { studioState.algorithms = [...document.querySelectorAll("[data-studio-algorithm]:checked")].map((x) => x.dataset.studioAlgorithm); rerender(); }));
+  document.querySelectorAll("[data-studio-component]").forEach((el) => el.addEventListener("change", () => { studioState.components = [...document.querySelectorAll("[data-studio-component]:checked")].map((x) => x.dataset.studioComponent); rerender(); }));
+}
+
+function downloadJson(name, payload) {
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a"); link.href = url; link.download = name; link.click(); URL.revokeObjectURL(url);
+}
+
+function setupStudioActions() {
+  document.querySelector("#studio-copy-link")?.addEventListener("click", async () => { writeStudioHash(); await navigator.clipboard?.writeText(location.href); });
+  document.querySelector("#studio-download-json")?.addEventListener("click", () => downloadJson("experiment-output.json", selectedStudioRows().selected));
+  document.querySelector("#studio-download-manifest")?.addEventListener("click", () => { const s = selectedStudioRows(); downloadJson("comparison-manifest.json", { run_id: data.latest?.run_id, state: studioState, selected: s.selected, compare: s.compare, outputs: s.sourceRows }); });
 }
 
 function renderMetrics() {
@@ -560,15 +752,36 @@ function renderToday() {
     .join("");
 }
 
+function sortLeaderboardRows(a, b) {
+  if (leaderboardFilters.sort === "diversity") return Number(b.diversity_score || 0) - Number(a.diversity_score || 0);
+  if (leaderboardFilters.sort === "selection") return Number((b.overall_selection_score ?? scoreValue(b)) || 0) - Number((a.overall_selection_score ?? scoreValue(a)) || 0);
+  if (leaderboardFilters.sort === "newest") return String(b.run_date || "").localeCompare(String(a.run_date || ""));
+  if (leaderboardFilters.sort === "algorithm") return String(a.algorithm || "style_range").localeCompare(String(b.algorithm || "style_range"));
+  return Number(scoreValue(b) || 0) - Number(scoreValue(a) || 0);
+}
+
+function renderLeaderboardFilterChips() {
+  const chips = document.querySelector("#leaderboard-filter-chips");
+  if (!chips) return;
+  const active = Object.entries(leaderboardFilters).filter(([key, value]) => value && value !== "all" && !(key === "sort" && value === "score"));
+  chips.innerHTML = active.length ? active.map(([key, value]) => `<span>${escapeHtml(key)}: ${escapeHtml(value)}</span>`).join("") : `<span>No active filters</span>`;
+}
+
 function renderLeaderboard() {
   const container = document.querySelector("#leaderboard");
+  const minScore = Number(leaderboardFilters.minScore);
   const rows = (data.leaderboard || [])
     .filter((row) => leaderboardFilters.style === "all" || row.style === leaderboardFilters.style)
     .filter((row) => leaderboardFilters.source === "all" || sourceKey(row) === leaderboardFilters.source)
     .filter((row) => leaderboardFilters.runDate === "all" || row.run_date === leaderboardFilters.runDate)
     .filter((row) => leaderboardFilters.algorithm === "all" || row.algorithm === leaderboardFilters.algorithm)
     .filter((row) => leaderboardFilters.profileBucket === "all" || (row.source_profile_bucket || row.source_profile?.profile_bucket) === leaderboardFilters.profileBucket)
+    .filter((row) => !Number.isFinite(minScore) || Number(scoreValue(row) || 0) >= minScore)
+    .filter((row) => leaderboardFilters.badge === "all" || (row.badges || []).includes(leaderboardFilters.badge))
+    .filter((row) => leaderboardFilters.profileTag === "all" || profileTagsForFilter(row).includes(leaderboardFilters.profileTag))
+    .sort((a, b) => sortLeaderboardRows(a, b))
     .slice(0, 20);
+  renderLeaderboardFilterChips();
   if (!rows.length) {
     container.innerHTML = `<div class="empty">No leaderboard entries yet.</div>`;
     return;
@@ -808,10 +1021,15 @@ async function init() {
   data.sourceAnalytics = await loadJson("data/source-analytics.json", {});
   data.algorithmAnalytics = await loadJson("data/algorithm-analytics.json", {});
 
+  loadStudioPreferences();
+  parseStudioHash();
+
   renderMetrics();
   renderDailyWinner();
   setupWinnerReveal();
   renderToday();
+  renderExperimentStudio();
+  setupStudioActions();
   renderLeaderboardFilters();
   setupLeaderboardFilters();
   renderLeaderboard();

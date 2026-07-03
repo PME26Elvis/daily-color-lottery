@@ -29,6 +29,21 @@
 
       <section class="daily-winner" id="daily-winner" aria-live="polite"></section>
 
+      <section class="panel experiment-studio" id="experiment-studio" aria-labelledby="experiment-studio-title">
+        <div class="section-heading studio-heading">
+          <div>
+            <p class="eyebrow">Experiment Studio</p>
+            <h2 id="experiment-studio-title">Explore, compare, replay, and export looks</h2>
+          </div>
+          <div class="studio-actions">
+            <button type="button" id="studio-copy-link">Copy permalink</button>
+            <button type="button" id="studio-download-json">Download metadata JSON</button>
+            <button type="button" id="studio-download-manifest">Download comparison manifest</button>
+          </div>
+        </div>
+        <div id="experiment-studio-root" class="studio-root"></div>
+      </section>
+
       <section class="grid metrics" id="metrics"></section>
 
       <section class="panel">
@@ -95,7 +110,13 @@
               </label>
               <label><span>Algorithm</span><select id="filter-algorithm" name="algorithm"><option value="all">All algorithms</option></select></label>
               <label><span>Profile</span><select id="filter-profile" name="profile"><option value="all">All profiles</option></select></label>
+              <label><span>Min score</span><input id="filter-min-score" name="min-score" type="number" min="0" max="100" step="1" placeholder="0" /></label>
+              <label><span>Badge</span><select id="filter-badge" name="badge"><option value="all">All badges</option></select></label>
+              <label><span>Profile tag</span><select id="filter-profile-tag" name="profile-tag"><option value="all">All tags</option></select></label>
+              <label><span>Sort</span><select id="filter-sort" name="sort"><option value="score">Score</option><option value="diversity">Diversity</option><option value="selection">Selection score</option><option value="newest">Newest</option><option value="algorithm">Algorithm</option></select></label>
+              <button class="filter-reset" id="filter-reset" type="button">Reset</button>
             </form>
+            <div class="filter-chips" id="leaderboard-filter-chips" aria-live="polite"></div>
           </div>
           <div id="leaderboard" class="leaderboard"></div>
         </div>

@@ -1363,3 +1363,115 @@ code {
 .badges { display:flex; flex-wrap:wrap; gap:.35rem; margin:.5rem 0; }
 .badge { border:1px solid rgba(255,255,255,.18); border-radius:999px; padding:.15rem .5rem; font-size:.75rem; background:rgba(255,255,255,.08); }
 .leaderboard-filters { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+
+/* Experiment Studio */
+.experiment-studio {
+  border-color: rgba(146, 183, 255, 0.28);
+  background: linear-gradient(135deg, rgba(30, 39, 70, 0.96), rgba(18, 25, 45, 0.82));
+}
+
+.studio-heading { align-items: flex-start; }
+.studio-actions, .filter-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.studio-actions button, .filter-reset {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 9px 12px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+}
+
+.studio-root { margin-top: 18px; }
+.studio-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.studio-controls {
+  position: sticky;
+  top: 14px;
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 16px;
+  background: rgba(8, 13, 27, 0.58);
+}
+
+.studio-controls label, .leaderboard-filters label { display: grid; gap: 6px; color: var(--muted); font-size: 0.78rem; }
+.studio-controls select, .studio-controls input, .leaderboard-filters input, .leaderboard-filters select {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 9px 10px;
+  background: #10182b;
+  color: var(--text);
+}
+
+.studio-controls fieldset {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 12px;
+}
+
+.studio-controls legend { color: var(--accent); font-size: 0.74rem; font-weight: 800; }
+.studio-controls .check { display: flex; grid-template-columns: auto 1fr; align-items: center; gap: 8px; }
+
+.studio-workspace { display: grid; gap: 16px; min-width: 0; }
+.studio-slider { min-height: 420px; border-radius: 28px; overflow: hidden; }
+.studio-side-by-side, .studio-grid-compare {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.studio-grid-compare { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.studio-side-by-side figure, .studio-grid-compare figure {
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: rgba(0, 0, 0, 0.22);
+}
+.studio-side-by-side img, .studio-grid-compare img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; }
+.studio-side-by-side figcaption, .studio-grid-compare figcaption { padding: 10px 12px; color: var(--muted); font-size: 0.82rem; }
+
+.studio-inspector {
+  display: grid;
+  gap: 14px;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 16px;
+  background: rgba(8, 13, 27, 0.42);
+}
+.studio-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+.studio-meta div { border: 1px solid var(--border); border-radius: 16px; padding: 10px; background: rgba(255,255,255,0.04); }
+.studio-meta dt { color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; }
+.studio-meta dd { margin: 4px 0 0; }
+.studio-chart { display: grid; gap: 8px; }
+.studio-bar { display: grid; grid-template-columns: 150px minmax(0, 1fr) 48px; gap: 10px; align-items: center; color: var(--muted); font-size: 0.82rem; }
+.studio-bar svg rect:first-child { fill: rgba(255,255,255,0.10); }
+.studio-bar svg .fill { fill: var(--good); }
+.studio-bar b { color: var(--text); text-align: right; }
+.studio-replay code, .studio-replay pre { display: block; overflow-x: auto; border-radius: 14px; padding: 10px; background: rgba(0,0,0,0.28); }
+.studio-replay pre { max-height: 240px; color: var(--muted); }
+.filter-chips { margin-top: 10px; }
+.filter-chips span { border: 1px solid var(--border); border-radius: 999px; padding: 6px 9px; color: var(--muted); background: rgba(255,255,255,0.05); font-size: 0.78rem; }
+
+@media (max-width: 860px) {
+  .studio-layout { grid-template-columns: 1fr; }
+  .studio-controls { position: static; }
+  .studio-side-by-side { grid-template-columns: 1fr; }
+  .studio-meta { grid-template-columns: 1fr; }
+  .studio-bar { grid-template-columns: 1fr; }
+}
