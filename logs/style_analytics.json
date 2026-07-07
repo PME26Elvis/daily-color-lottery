@@ -1,17 +1,17 @@
 {
-  "run_count": 54,
-  "output_count": 810,
-  "latest_run_date": "2026-07-06",
+  "run_count": 55,
+  "output_count": 825,
+  "latest_run_date": "2026-07-07",
   "recent_window_days": 7,
   "styles": [
     {
       "style": "palette_cinematic",
-      "count": 13,
-      "average_score": 86.73,
+      "count": 20,
+      "average_score": 85.9,
       "best_score": 94.01,
-      "daily_wins": 4,
-      "source_wins": 5,
-      "recent_7_day_average": 86.73,
+      "daily_wins": 5,
+      "source_wins": 6,
+      "recent_7_day_average": 85.9,
       "best_output": {
         "algorithm": "palette_cinematic",
         "algorithm_description": "Palette-aware cinematic split tone based on dominant hues.",
@@ -122,12 +122,12 @@
     },
     {
       "style": "film_faded",
-      "count": 171,
-      "average_score": 85.6,
+      "count": 177,
+      "average_score": 85.59,
       "best_score": 95.17,
       "daily_wins": 20,
-      "source_wins": 121,
-      "recent_7_day_average": 85.36,
+      "source_wins": 123,
+      "recent_7_day_average": 84.96,
       "best_output": {
         "best_for_source_today": true,
         "grain_seed_hex": "0xebc7121aab017c47",
@@ -405,12 +405,12 @@
     },
     {
       "style": "adaptive_auto_enhance",
-      "count": 9,
-      "average_score": 80.45,
+      "count": 11,
+      "average_score": 80.48,
       "best_score": 85.82,
       "daily_wins": 0,
       "source_wins": 0,
-      "recent_7_day_average": 80.45,
+      "recent_7_day_average": 80.48,
       "best_output": {
         "algorithm": "adaptive_auto_enhance",
         "algorithm_description": "Source-aware exposure, contrast, and saturation correction.",
@@ -521,7 +521,7 @@
       "best_score": 90.56,
       "daily_wins": 0,
       "source_wins": 6,
-      "recent_7_day_average": 78.34,
+      "recent_7_day_average": 76.7,
       "best_output": {
         "best_for_source_today": false,
         "grain_seed_hex": "0x464e45cd3f282e55",
@@ -578,7 +578,7 @@
       "best_score": 97.3,
       "daily_wins": 29,
       "source_wins": 29,
-      "recent_7_day_average": 74.68,
+      "recent_7_day_average": 75.19,
       "best_output": {
         "best_for_source_today": true,
         "grain_seed_hex": "0x46e69dc895b97f5d",
@@ -635,7 +635,7 @@
       "best_score": 94.46,
       "daily_wins": 1,
       "source_wins": 1,
-      "recent_7_day_average": 67.48,
+      "recent_7_day_average": 69.06,
       "best_output": {
         "best_for_source_today": true,
         "grain_seed_hex": "0xdeefa17585a08044",
@@ -692,7 +692,7 @@
       "best_score": 90.01,
       "daily_wins": 0,
       "source_wins": 0,
-      "recent_7_day_average": 63.08,
+      "recent_7_day_average": 62.43,
       "best_output": {
         "best_for_source_today": false,
         "grain_seed_hex": "0x8510deb7104d7b70",
