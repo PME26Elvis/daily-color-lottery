@@ -859,6 +859,103 @@
     "replay_command": "python -m src.generate --recipe recipe-722cd3c8d7dcc3f4"
   },
   {
+    "recipe_id": "recipe-2c626381a09d8afc",
+    "name": "Palette Cinematic · colorful",
+    "source_output_path": "output/archive/2026-07-16/coffee-shop-outdoor/2026-07-16T05-38-43Z_01_palette_cinematic.jpg",
+    "source_run_id": "2026-07-16T05-38-43Z",
+    "algorithm": "palette_cinematic",
+    "style": "palette_cinematic",
+    "params": {
+      "brightness": 0.006999,
+      "contrast": 1.176265,
+      "exposure": -0.000482,
+      "fade": 0.039456,
+      "gamma": 0.925751,
+      "grain": 0.014051,
+      "highlight_tone": "#FFAA4D",
+      "highlights": -0.014773,
+      "saturation": 0.974924,
+      "shadow_tone": "#243B8F",
+      "shadows": -0.036174,
+      "split_balance": -0.087435,
+      "split_strength": 0.337979,
+      "temperature": 0.087605,
+      "tint": 0.012925,
+      "vibrance": 0.251044,
+      "vignette": 0.177253
+    },
+    "grain_seed_policy": {
+      "mode": "regenerate",
+      "source_seed_hex": "0x6dad69e7"
+    },
+    "source_profile": {
+      "mean_luminance": 0.5167,
+      "luminance_std": 0.2037,
+      "clipping_ratio": 0.00443,
+      "mean_saturation": 0.2585,
+      "dominant_palette": [
+        "#6188BA",
+        "#749BCA",
+        "#32404A",
+        "#7AA3D1",
+        "#BECBD8"
+      ],
+      "hue_spread": 0.0826,
+      "temperature_bias": -0.2494,
+      "sharpness_local_contrast": 0.01709,
+      "profile_tags": [
+        "colorful"
+      ],
+      "profile_bucket": "colorful"
+    },
+    "source_profile_bucket": "colorful",
+    "score_summary": {
+      "score": 93.34,
+      "components": {
+        "score": 93.34,
+        "contrast": 98.54,
+        "exposure_balance": 97.86,
+        "saturation_balance": 63.1,
+        "detail": 86.67,
+        "exposure_score": 98.61,
+        "contrast_score": 98.54,
+        "saturation_score": 99.99,
+        "clipping_score": 99.24,
+        "sharpness_score": 86.67,
+        "color_balance_score": 63.1,
+        "palette_diversity_score": 84.39,
+        "local_contrast_score": 67.25,
+        "highlight_rolloff_score": 99.22,
+        "distinctiveness_score": 98.93,
+        "composition_safety_score": 98.69,
+        "skin_tone_guard_score": 57.56,
+        "palette_harmony_score": 98.07,
+        "dynamic_range_score": 95.68,
+        "mood_distinctiveness_score": 98.93,
+        "artifact_risk_score": 99.39,
+        "mean_luminance": 0.5335,
+        "luminance_std": 0.1994,
+        "mean_saturation": 0.2217,
+        "clip_ratio": 0.00152,
+        "sharpness_raw": 0.04767
+      }
+    },
+    "palette": [
+      "#698CAA",
+      "#82A4BE",
+      "#34445B",
+      "#93ACBF",
+      "#C9C4B2"
+    ],
+    "tags": [
+      "cinematic",
+      "warm",
+      "colorful-source friendly"
+    ],
+    "created_date": "2026-07-16",
+    "replay_command": "python -m src.generate --recipe recipe-2c626381a09d8afc"
+  },
+  {
     "recipe_id": "recipe-15a489367053fa9b",
     "name": "Palette Cinematic · colorful",
     "source_output_path": "output/archive/2026-07-14/coffee-shop-outdoor/2026-07-14T05-28-18Z_01_palette_cinematic.jpg",
@@ -3249,6 +3346,99 @@
     "replay_command": "python -m src.generate --recipe recipe-af8a98b3a306ca0e"
   },
   {
+    "recipe_id": "recipe-bd2790182bd205a2",
+    "name": "Moody Blue · colorful",
+    "source_output_path": "output/archive/2026-07-16/coffee-shop-outdoor/2026-07-16T05-38-43Z_02_moody_blue.jpg",
+    "source_run_id": "2026-07-16T05-38-43Z",
+    "algorithm": "diversity_explorer",
+    "style": "moody_blue",
+    "params": {
+      "brightness": -0.030671,
+      "contrast": 0.798556,
+      "exposure": -0.106683,
+      "fade": 0.026096,
+      "gamma": 0.951878,
+      "grain": 0.022464,
+      "highlights": -0.044208,
+      "saturation": 1.116157,
+      "shadows": -0.065397,
+      "temperature": 0.175676,
+      "tint": 0.031552,
+      "vibrance": 0.158907,
+      "vignette": 0.103833
+    },
+    "grain_seed_policy": {
+      "mode": "regenerate",
+      "source_seed_hex": "0x22cd49bf"
+    },
+    "source_profile": {
+      "mean_luminance": 0.5167,
+      "luminance_std": 0.2037,
+      "clipping_ratio": 0.00443,
+      "mean_saturation": 0.2585,
+      "dominant_palette": [
+        "#6188BA",
+        "#749BCA",
+        "#32404A",
+        "#7AA3D1",
+        "#BECBD8"
+      ],
+      "hue_spread": 0.0826,
+      "temperature_bias": -0.2494,
+      "sharpness_local_contrast": 0.01709,
+      "profile_tags": [
+        "colorful"
+      ],
+      "profile_bucket": "colorful"
+    },
+    "source_profile_bucket": "colorful",
+    "score_summary": {
+      "score": 90.67,
+      "components": {
+        "score": 90.67,
+        "contrast": 87.79,
+        "exposure_balance": 98.86,
+        "saturation_balance": 73.03,
+        "detail": 100.0,
+        "exposure_score": 98.91,
+        "contrast_score": 87.79,
+        "saturation_score": 80.91,
+        "clipping_score": 99.95,
+        "sharpness_score": 100.0,
+        "color_balance_score": 90.26,
+        "palette_diversity_score": 97.67,
+        "local_contrast_score": 73.58,
+        "highlight_rolloff_score": 100.0,
+        "distinctiveness_score": 59.18,
+        "composition_safety_score": 99.4,
+        "skin_tone_guard_score": 87.03,
+        "palette_harmony_score": 88.14,
+        "dynamic_range_score": 86.32,
+        "mood_distinctiveness_score": 59.18,
+        "artifact_risk_score": 99.96,
+        "mean_luminance": 0.4703,
+        "luminance_std": 0.1588,
+        "mean_saturation": 0.1159,
+        "clip_ratio": 0.0001,
+        "sharpness_raw": 0.05518
+      }
+    },
+    "palette": [
+      "#687C80",
+      "#82908D",
+      "#778C8C",
+      "#3E423A",
+      "#AFA68B"
+    ],
+    "tags": [
+      "warm",
+      "cool",
+      "colorful-source friendly"
+    ],
+    "created_date": "2026-07-16",
+    "replay_command": "python -m src.generate --recipe recipe-bd2790182bd205a2"
+  },
+  {
     "recipe_id": "recipe-7d0d75a2430a4136",
     "name": "Film Faded · colorful",
     "source_output_path": "output/archive/2026-07-07/coffee-shop-outdoor/2026-07-07T06-45-23Z_02_film_faded.jpg",
@@ -4044,6 +4234,99 @@
     ],
     "created_date": "2026-07-10",
     "replay_command": "python -m src.generate --recipe recipe-f805df6f36e6a592"
+  },
+  {
+    "recipe_id": "recipe-52a8c19be1036a9d",
+    "name": "Film Faded · colorful",
+    "source_output_path": "output/archive/2026-07-16/coffee-shop-outdoor/2026-07-16T05-38-43Z_03_film_faded.jpg",
+    "source_run_id": "2026-07-16T05-38-43Z",
+    "algorithm": "style_range",
+    "style": "film_faded",
+    "params": {
+      "brightness": -0.007321,
+      "contrast": 0.87637,
+      "exposure": 0.09294,
+      "fade": 0.114143,
+      "gamma": 1.073482,
+      "grain": 0.02224,
+      "highlights": 0.021785,
+      "saturation": 0.798138,
+      "shadows": 0.021627,
+      "temperature": 0.112971,
+      "tint": 0.002356,
+      "vibrance": 0.069579,
+      "vignette": 0.027996
+    },
+    "grain_seed_policy": {
+      "mode": "regenerate",
+      "source_seed_hex": "0xc961bc27"
+    },
+    "source_profile": {
+      "mean_luminance": 0.5167,
+      "luminance_std": 0.2037,
+      "clipping_ratio": 0.00443,
+      "mean_saturation": 0.2585,
+      "dominant_palette": [
+        "#6188BA",
+        "#749BCA",
+        "#32404A",
+        "#7AA3D1",
+        "#BECBD8"
+      ],
+      "hue_spread": 0.0826,
+      "temperature_bias": -0.2494,
+      "sharpness_local_contrast": 0.01709,
+      "profile_tags": [
+        "colorful"
+      ],
+      "profile_bucket": "colorful"
+    },
+    "source_profile_bucket": "colorful",
+    "score_summary": {
+      "score": 90.19,
+      "components": {
+        "score": 90.19,
+        "contrast": 92.41,
+        "exposure_balance": 88.2,
+        "saturation_balance": 68.25,
+        "detail": 100.0,
+        "exposure_score": 92.41,
+        "contrast_score": 92.41,
+        "saturation_score": 83.17,
+        "clipping_score": 95.44,
+        "sharpness_score": 100.0,
+        "color_balance_score": 82.06,
+        "palette_diversity_score": 95.51,
+        "local_contrast_score": 74.32,
+        "highlight_rolloff_score": 88.53,
+        "distinctiveness_score": 79.11,
+        "composition_safety_score": 92.55,
+        "skin_tone_guard_score": 81.94,
+        "palette_harmony_score": 99.89,
+        "dynamic_range_score": 86.21,
+        "mood_distinctiveness_score": 79.11,
+        "artifact_risk_score": 96.36,
+        "mean_luminance": 0.5795,
+        "luminance_std": 0.1723,
+        "mean_saturation": 0.1228,
+        "clip_ratio": 0.00911,
+        "sharpness_raw": 0.05608
+      }
+    },
+    "palette": [
+      "#8194A6",
+      "#94A5B5",
+      "#9AACBA",
+      "#575B5C",
+      "#D1CEC6"
+    ],
+    "tags": [
+      "muted",
+      "warm",
+      "colorful-source friendly"
+    ],
+    "created_date": "2026-07-16",
+    "replay_command": "python -m src.generate --recipe recipe-52a8c19be1036a9d"
   },
   {
     "recipe_id": "recipe-1779ae05681bab04",
@@ -5338,6 +5621,98 @@
     ],
     "created_date": "2026-07-03",
     "replay_command": "python -m src.generate --recipe recipe-def368a00dd4f8a5"
+  },
+  {
+    "recipe_id": "recipe-caf9ab8b20a38262",
+    "name": "Adaptive Auto Enhance · colorful",
+    "source_output_path": "output/archive/2026-07-16/coffee-shop-outdoor/2026-07-16T05-38-43Z_04_adaptive_auto_enhance.jpg",
+    "source_run_id": "2026-07-16T05-38-43Z",
+    "algorithm": "adaptive_auto_enhance",
+    "style": "adaptive_auto_enhance",
+    "params": {
+      "brightness": 0.054847,
+      "contrast": 0.974091,
+      "exposure": -0.01616,
+      "fade": 0.03072,
+      "gamma": 0.930204,
+      "grain": 0.010107,
+      "highlights": -0.011075,
+      "saturation": 0.984992,
+      "shadows": -0.016675,
+      "temperature": 0.035802,
+      "tint": 0.027163,
+      "vibrance": 0.25535,
+      "vignette": 0.082668
+    },
+    "grain_seed_policy": {
+      "mode": "regenerate",
+      "source_seed_hex": "0x6100fcf9"
+    },
+    "source_profile": {
+      "mean_luminance": 0.5167,
+      "luminance_std": 0.2037,
+      "clipping_ratio": 0.00443,
+      "mean_saturation": 0.2585,
+      "dominant_palette": [
+        "#6188BA",
+        "#749BCA",
+        "#32404A",
+        "#7AA3D1",
+        "#BECBD8"
+      ],
+      "hue_spread": 0.0826,
+      "temperature_bias": -0.2494,
+      "sharpness_local_contrast": 0.01709,
+      "profile_tags": [
+        "colorful"
+      ],
+      "profile_bucket": "colorful"
+    },
+    "source_profile_bucket": "colorful",
+    "score_summary": {
+      "score": 88.8,
+      "components": {
+        "score": 88.8,
+        "contrast": 96.53,
+        "exposure_balance": 90.74,
+        "saturation_balance": 56.95,
+        "detail": 74.12,
+        "exposure_score": 91.33,
+        "contrast_score": 96.53,
+        "saturation_score": 100.0,
+        "clipping_score": 99.35,
+        "sharpness_score": 74.12,
+        "color_balance_score": 56.95,
+        "palette_diversity_score": 67.71,
+        "local_contrast_score": 61.3,
+        "highlight_rolloff_score": 94.3,
+        "distinctiveness_score": 99.94,
+        "composition_safety_score": 94.98,
+        "skin_tone_guard_score": 50.36,
+        "palette_harmony_score": 89.95,
+        "dynamic_range_score": 93.58,
+        "mood_distinctiveness_score": 99.94,
+        "artifact_risk_score": 99.48,
+        "mean_luminance": 0.5852,
+        "luminance_std": 0.1881,
+        "mean_saturation": 0.2192,
+        "clip_ratio": 0.0013,
+        "sharpness_raw": 0.04077
+      }
+    },
+    "palette": [
+      "#759ABB",
+      "#8EB4D3",
+      "#86ADCC",
+      "#47575D",
+      "#C8D5D2"
+    ],
+    "tags": [
+      "clean",
+      "colorful-source friendly"
+    ],
+    "created_date": "2026-07-16",
+    "replay_command": "python -m src.generate --recipe recipe-caf9ab8b20a38262"
   },
   {
     "recipe_id": "recipe-cbbac17dc9f46dad",
@@ -8681,6 +9056,104 @@
     "replay_command": "python -m src.generate --recipe recipe-b4edc5391d441a4b"
   },
   {
+    "recipe_id": "recipe-9aea82809fd74731",
+    "name": "Palette Cinematic · low-light",
+    "source_output_path": "output/archive/2026-07-16/kb-hi75c-wob-1/2026-07-16T05-38-43Z_01_palette_cinematic.jpg",
+    "source_run_id": "2026-07-16T05-38-43Z",
+    "algorithm": "palette_cinematic",
+    "style": "palette_cinematic",
+    "params": {
+      "brightness": 0.009761,
+      "contrast": 1.084005,
+      "exposure": 0.152931,
+      "fade": 0.033112,
+      "gamma": 1.021431,
+      "grain": 0.015548,
+      "highlight_tone": "#FFAA4D",
+      "highlights": -0.077832,
+      "saturation": 1.07616,
+      "shadow_tone": "#0A7C86",
+      "shadows": 0.007258,
+      "split_balance": 0.157805,
+      "split_strength": 0.36376,
+      "temperature": 0.031401,
+      "tint": 0.054071,
+      "vibrance": 0.262927,
+      "vignette": 0.072079
+    },
+    "grain_seed_policy": {
+      "mode": "regenerate",
+      "source_seed_hex": "0x235800cf"
+    },
+    "source_profile": {
+      "mean_luminance": 0.228,
+      "luminance_std": 0.1986,
+      "clipping_ratio": 0.16265,
+      "mean_saturation": 0.0045,
+      "dominant_palette": [
+        "#434342",
+        "#060606",
+        "#262625",
+        "#545352",
+        "#9B9A98"
+      ],
+      "hue_spread": 0.0,
+      "temperature_bias": 0.0042,
+      "sharpness_local_contrast": 0.02877,
+      "profile_tags": [
+        "low-light",
+        "muted"
+      ],
+      "profile_bucket": "low-light"
+    },
+    "source_profile_bucket": "low-light",
+    "score_summary": {
+      "score": 85.29,
+      "components": {
+        "score": 85.29,
+        "contrast": 93.36,
+        "exposure_balance": 61.47,
+        "saturation_balance": 66.92,
+        "detail": 100.0,
+        "exposure_score": 64.32,
+        "contrast_score": 93.36,
+        "saturation_score": 84.23,
+        "clipping_score": 95.57,
+        "sharpness_score": 100.0,
+        "color_balance_score": 79.45,
+        "palette_diversity_score": 80.13,
+        "local_contrast_score": 77.51,
+        "highlight_rolloff_score": 99.76,
+        "distinctiveness_score": 98.8,
+        "composition_safety_score": 77.01,
+        "skin_tone_guard_score": 78.39,
+        "palette_harmony_score": 96.42,
+        "dynamic_range_score": 87.13,
+        "mood_distinctiveness_score": 98.8,
+        "artifact_risk_score": 96.46,
+        "mean_luminance": 0.3121,
+        "luminance_std": 0.1755,
+        "mean_saturation": 0.1263,
+        "clip_ratio": 0.00886,
+        "sharpness_raw": 0.06003
+      }
+    },
+    "palette": [
+      "#44564D",
+      "#093237",
+      "#848A73",
+      "#163B3C",
+      "#2E4844"
+    ],
+    "tags": [
+      "cinematic",
+      "low-light friendly",
+      "colorful-source friendly"
+    ],
+    "created_date": "2026-07-16",
+    "replay_command": "python -m src.generate --recipe recipe-9aea82809fd74731"
+  },
+  {
     "recipe_id": "recipe-26616bbfd7696498",
     "name": "Film Faded · low-light",
     "source_output_path": "output/archive/2026-07-09/kb-hi75c-wob-1/2026-07-09T06-42-37Z_01_film_faded.jpg",
@@ -9906,6 +10379,103 @@
     ],
     "created_date": "2026-07-10",
     "replay_command": "python -m src.generate --recipe recipe-ca833c28eaca80a2"
+  },
+  {
+    "recipe_id": "recipe-c4f838a5344b3d91",
+    "name": "Film Faded · low-light",
+    "source_output_path": "output/archive/2026-07-16/kb-hi75c-wob-2/2026-07-16T05-38-43Z_01_film_faded.jpg",
+    "source_run_id": "2026-07-16T05-38-43Z",
+    "algorithm": "diversity_explorer",
+    "style": "film_faded",
+    "params": {
+      "brightness": -0.01606,
+      "contrast": 1.309464,
+      "exposure": 0.308894,
+      "fade": 0.197037,
+      "gamma": 1.000195,
+      "grain": 0.014245,
+      "highlights": 0.03195,
+      "saturation": 1.157606,
+      "shadows": 0.142399,
+      "temperature": -0.143973,
+      "tint": -0.018562,
+      "vibrance": 0.041583,
+      "vignette": 0.057322
+    },
+    "grain_seed_policy": {
+      "mode": "regenerate",
+      "source_seed_hex": "0x1c18faf8"
+    },
+    "source_profile": {
+      "mean_luminance": 0.2121,
+      "luminance_std": 0.2619,
+      "clipping_ratio": 0.03492,
+      "mean_saturation": 0.0228,
+      "dominant_palette": [
+        "#0F1110",
+        "#060807",
+        "#1E2020",
+        "#BEC0C0",
+        "#6E7070"
+      ],
+      "hue_spread": 0.8952,
+      "temperature_bias": -0.0063,
+      "sharpness_local_contrast": 0.01823,
+      "profile_tags": [
+        "low-light",
+        "muted",
+        "high-contrast"
+      ],
+      "profile_bucket": "low-light"
+    },
+    "source_profile_bucket": "low-light",
+    "score_summary": {
+      "score": 82.34,
+      "components": {
+        "score": 82.34,
+        "contrast": 95.16,
+        "exposure_balance": 80.98,
+        "saturation_balance": 54.73,
+        "detail": 84.75,
+        "exposure_score": 87.7,
+        "contrast_score": 95.16,
+        "saturation_score": 57.71,
+        "clipping_score": 92.34,
+        "sharpness_score": 84.75,
+        "color_balance_score": 94.83,
+        "palette_diversity_score": 51.88,
+        "local_contrast_score": 66.37,
+        "highlight_rolloff_score": 74.95,
+        "distinctiveness_score": 88.57,
+        "composition_safety_score": 87.79,
+        "skin_tone_guard_score": 89.47,
+        "palette_harmony_score": 78.82,
+        "dynamic_range_score": 91.7,
+        "mood_distinctiveness_score": 88.57,
+        "artifact_risk_score": 93.87,
+        "mean_luminance": 0.3975,
+        "luminance_std": 0.2578,
+        "mean_saturation": 0.0522,
+        "clip_ratio": 0.01531,
+        "sharpness_raw": 0.04661
+      }
+    },
+    "palette": [
+      "#40413D",
+      "#363533",
+      "#4E5253",
+      "#E1F0F3",
+      "#93A3B2"
+    ],
+    "tags": [
+      "high contrast",
+      "muted",
+      "cool",
+      "low-light friendly",
+      "colorful-source friendly"
+    ],
+    "created_date": "2026-07-16",
+    "replay_command": "python -m src.generate --recipe recipe-c4f838a5344b3d91"
   },
   {
     "recipe_id": "recipe-d0490d2982309414",
