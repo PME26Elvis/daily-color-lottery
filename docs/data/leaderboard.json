@@ -1761,6 +1761,107 @@
     "best_for_source_today": true
   },
   {
+    "run_id": "2026-08-23T03-48-37Z",
+    "run_date": "2026-08-23",
+    "source_path": "sources/coffee-shop-outdoor.png",
+    "source_name": "coffee-shop-outdoor.png",
+    "source_slug": "coffee-shop-outdoor",
+    "source_sha256": "e794844cab5d7eee5418404c14ab8d5bc4f163ffa9ee11d59b3a8dcda8aed629",
+    "style": "cinematic_warm",
+    "style_description": "Sampled from configured style ranges.",
+    "algorithm": "style_range",
+    "algorithm_description": "Backward-compatible fixed style range sampler.",
+    "source_profile": {
+      "mean_luminance": 0.5167,
+      "luminance_std": 0.2037,
+      "clipping_ratio": 0.00443,
+      "mean_saturation": 0.2585,
+      "dominant_palette": [
+        "#6188BA",
+        "#749BCA",
+        "#32404A",
+        "#7AA3D1",
+        "#BECBD8"
+      ],
+      "hue_spread": 0.0826,
+      "temperature_bias": -0.2494,
+      "sharpness_local_contrast": 0.01709,
+      "profile_tags": [
+        "colorful"
+      ],
+      "profile_bucket": "colorful"
+    },
+    "source_profile_bucket": "colorful",
+    "source_profile_tags": [
+      "colorful"
+    ],
+    "selection_reason": "Best quality candidate",
+    "candidate_rank": 1,
+    "diversity_score": 100.0,
+    "overall_selection_score": 103.31,
+    "badges": [
+      "Classic",
+      "Best for source"
+    ],
+    "index": 1,
+    "params": {
+      "exposure": 0.066408,
+      "brightness": 0.006826,
+      "contrast": 1.121484,
+      "saturation": 0.891702,
+      "vibrance": 0.290346,
+      "temperature": 0.160332,
+      "tint": -0.020394,
+      "shadows": -0.086099,
+      "highlights": 0.003558,
+      "gamma": 0.945501,
+      "fade": 0.038714,
+      "vignette": 0.169739,
+      "grain": 0.018798
+    },
+    "grain_seed_hex": "0x94ac0cc9",
+    "output_path": "output/archive/2026-08-23/coffee-shop-outdoor/2026-08-23T03-48-37Z_01_cinematic_warm.jpg",
+    "latest_path": "output/latest/coffee-shop-outdoor/01_cinematic_warm.jpg",
+    "score": {
+      "score": 93.99,
+      "contrast": 99.68,
+      "exposure_balance": 92.98,
+      "saturation_balance": 71.04,
+      "detail": 100.0,
+      "exposure_score": 98.22,
+      "contrast_score": 99.68,
+      "saturation_score": 92.37,
+      "clipping_score": 94.66,
+      "sharpness_score": 100.0,
+      "color_balance_score": 76.9,
+      "palette_diversity_score": 98.95,
+      "local_contrast_score": 76.21,
+      "highlight_rolloff_score": 94.65,
+      "distinctiveness_score": 86.5,
+      "composition_safety_score": 94.86,
+      "skin_tone_guard_score": 74.98,
+      "palette_harmony_score": 98.3,
+      "dynamic_range_score": 94.44,
+      "mood_distinctiveness_score": 86.5,
+      "artifact_risk_score": 95.73,
+      "mean_luminance": 0.5379,
+      "luminance_std": 0.2297,
+      "mean_saturation": 0.1562,
+      "clip_ratio": 0.01067,
+      "sharpness_raw": 0.05843
+    },
+    "palette": [
+      "#758CA5",
+      "#8FA4B9",
+      "#373B3C",
+      "#9BAEC4",
+      "#D1D0C4"
+    ],
+    "width": 691,
+    "height": 862,
+    "best_for_source_today": true
+  },
+  {
     "run_id": "2026-06-24T06-48-35Z",
     "run_date": "2026-06-24",
     "source_path": "sources/coffee-shop-outdoor.png",
@@ -7880,110 +7981,5 @@
     "width": 691,
     "height": 862,
     "best_for_source_today": false
-  },
-  {
-    "run_id": "2026-07-25T05-41-27Z",
-    "run_date": "2026-07-25",
-    "source_path": "sources/coffee-shop-outdoor.png",
-    "source_name": "coffee-shop-outdoor.png",
-    "source_slug": "coffee-shop-outdoor",
-    "source_sha256": "e794844cab5d7eee5418404c14ab8d5bc4f163ffa9ee11d59b3a8dcda8aed629",
-    "style": "palette_cinematic",
-    "style_description": "Chose temperature and split tones from palette spread and warm/cool bias.",
-    "algorithm": "palette_cinematic",
-    "algorithm_description": "Palette-aware cinematic split tone based on dominant hues.",
-    "source_profile": {
-      "mean_luminance": 0.5167,
-      "luminance_std": 0.2037,
-      "clipping_ratio": 0.00443,
-      "mean_saturation": 0.2585,
-      "dominant_palette": [
-        "#6188BA",
-        "#749BCA",
-        "#32404A",
-        "#7AA3D1",
-        "#BECBD8"
-      ],
-      "hue_spread": 0.0826,
-      "temperature_bias": -0.2494,
-      "sharpness_local_contrast": 0.01709,
-      "profile_tags": [
-        "colorful"
-      ],
-      "profile_bucket": "colorful"
-    },
-    "source_profile_bucket": "colorful",
-    "source_profile_tags": [
-      "colorful"
-    ],
-    "selection_reason": "Best quality candidate",
-    "candidate_rank": 1,
-    "diversity_score": 100.0,
-    "overall_selection_score": 102.1,
-    "badges": [
-      "Palette-aware",
-      "Best for source"
-    ],
-    "index": 1,
-    "params": {
-      "exposure": -0.051215,
-      "brightness": -0.010062,
-      "contrast": 1.103305,
-      "saturation": 1.133441,
-      "vibrance": 0.186833,
-      "temperature": 0.178729,
-      "tint": -0.022733,
-      "shadows": 0.019932,
-      "highlights": -0.037929,
-      "shadow_tone": "#243B8F",
-      "highlight_tone": "#FFAA4D",
-      "split_strength": 0.40455,
-      "split_balance": -0.029643,
-      "gamma": 1.002568,
-      "fade": 0.001298,
-      "vignette": 0.092306,
-      "grain": 0.015028
-    },
-    "grain_seed_hex": "0xd124e39a",
-    "output_path": "output/archive/2026-07-25/coffee-shop-outdoor/2026-07-25T05-41-27Z_01_palette_cinematic.jpg",
-    "latest_path": "output/latest/coffee-shop-outdoor/01_palette_cinematic.jpg",
-    "score": {
-      "score": 92.43,
-      "contrast": 94.23,
-      "exposure_balance": 93.03,
-      "saturation_balance": 75.68,
-      "detail": 83.68,
-      "exposure_score": 99.02,
-      "contrast_score": 94.23,
-      "saturation_score": 99.6,
-      "clipping_score": 93.95,
-      "sharpness_score": 83.68,
-      "color_balance_score": 75.98,
-      "palette_diversity_score": 96.03,
-      "local_contrast_score": 65.84,
-      "highlight_rolloff_score": 98.42,
-      "distinctiveness_score": 89.61,
-      "composition_safety_score": 94.68,
-      "skin_tone_guard_score": 73.76,
-      "palette_harmony_score": 99.8,
-      "dynamic_range_score": 86.41,
-      "mood_distinctiveness_score": 89.61,
-      "artifact_risk_score": 95.16,
-      "mean_luminance": 0.4719,
-      "luminance_std": 0.1786,
-      "mean_saturation": 0.2058,
-      "clip_ratio": 0.0121,
-      "sharpness_raw": 0.04602
-    },
-    "palette": [
-      "#607995",
-      "#768EA3",
-      "#303B51",
-      "#8693A2",
-      "#CDB091"
-    ],
-    "width": 691,
-    "height": 862,
-    "best_for_source_today": true
   }
 ]
