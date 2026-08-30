@@ -1,7 +1,7 @@
 {
-  "run_count": 108,
-  "output_count": 1620,
-  "latest_run_date": "2026-08-29",
+  "run_count": 109,
+  "output_count": 1635,
+  "latest_run_date": "2026-08-30",
   "recent_window_days": 7,
   "styles": [
     {
@@ -11,7 +11,7 @@
       "best_score": 91.15,
       "daily_wins": 0,
       "source_wins": 0,
-      "recent_7_day_average": 85.19,
+      "recent_7_day_average": 86.28,
       "best_output": {
         "algorithm": "monochrome_editorial",
         "algorithm_description": "Black-and-white editorial grade for shape and contrast.",
@@ -117,12 +117,12 @@
     },
     {
       "style": "film_faded",
-      "count": 424,
-      "average_score": 85.31,
+      "count": 428,
+      "average_score": 85.29,
       "best_score": 95.17,
       "daily_wins": 20,
-      "source_wins": 199,
-      "recent_7_day_average": 84.92,
+      "source_wins": 200,
+      "recent_7_day_average": 84.42,
       "best_output": {
         "best_for_source_today": true,
         "grain_seed_hex": "0xebc7121aab017c47",
@@ -174,12 +174,12 @@
     },
     {
       "style": "palette_cinematic",
-      "count": 206,
-      "average_score": 85.17,
+      "count": 210,
+      "average_score": 85.16,
       "best_score": 94.93,
-      "daily_wins": 41,
-      "source_wins": 54,
-      "recent_7_day_average": 85.16,
+      "daily_wins": 42,
+      "source_wins": 56,
+      "recent_7_day_average": 85.46,
       "best_output": {
         "algorithm": "palette_cinematic",
         "algorithm_description": "Palette-aware cinematic split tone based on dominant hues.",
@@ -290,12 +290,12 @@
     },
     {
       "style": "adaptive_auto_enhance",
-      "count": 127,
-      "average_score": 82.27,
+      "count": 130,
+      "average_score": 82.29,
       "best_score": 91.59,
       "daily_wins": 0,
       "source_wins": 1,
-      "recent_7_day_average": 82.98,
+      "recent_7_day_average": 82.74,
       "best_output": {
         "algorithm": "adaptive_auto_enhance",
         "algorithm_description": "Source-aware exposure, contrast, and saturation correction.",
@@ -401,12 +401,12 @@
     },
     {
       "style": "pastel_duotone",
-      "count": 101,
-      "average_score": 82.21,
+      "count": 104,
+      "average_score": 82.25,
       "best_score": 90.64,
       "daily_wins": 0,
       "source_wins": 16,
-      "recent_7_day_average": 82.23,
+      "recent_7_day_average": 82.72,
       "best_output": {
         "algorithm": "diversity_explorer",
         "algorithm_description": "Experimental wide sampler that explores varied looks.",
@@ -521,7 +521,7 @@
       "best_score": 90.66,
       "daily_wins": 0,
       "source_wins": 7,
-      "recent_7_day_average": 79.99,
+      "recent_7_day_average": 79.63,
       "best_output": {
         "algorithm": "style_range",
         "algorithm_description": "Backward-compatible fixed style range sampler.",
@@ -627,12 +627,12 @@
     },
     {
       "style": "cinematic_warm",
-      "count": 202,
-      "average_score": 75.05,
+      "count": 203,
+      "average_score": 75.13,
       "best_score": 97.3,
       "daily_wins": 45,
       "source_wins": 45,
-      "recent_7_day_average": 87.77,
+      "recent_7_day_average": 87.27,
       "best_output": {
         "best_for_source_today": true,
         "grain_seed_hex": "0x46e69dc895b97f5d",
