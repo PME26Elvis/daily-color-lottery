@@ -1,17 +1,17 @@
 {
-  "run_count": 167,
-  "output_count": 2505,
-  "latest_run_date": "2026-10-27",
+  "run_count": 168,
+  "output_count": 2520,
+  "latest_run_date": "2026-10-28",
   "recent_window_days": 7,
   "styles": [
     {
       "style": "palette_cinematic",
-      "count": 400,
+      "count": 403,
       "average_score": 85.45,
       "best_score": 95.11,
-      "daily_wins": 77,
-      "source_wins": 104,
-      "recent_7_day_average": 86.27,
+      "daily_wins": 78,
+      "source_wins": 105,
+      "recent_7_day_average": 86.02,
       "best_output": {
         "algorithm": "palette_cinematic",
         "algorithm_description": "Palette-aware cinematic split tone based on dominant hues.",
@@ -122,12 +122,12 @@
     },
     {
       "style": "film_faded",
-      "count": 688,
+      "count": 693,
       "average_score": 85.01,
       "best_score": 95.25,
       "daily_wins": 25,
-      "source_wins": 288,
-      "recent_7_day_average": 84.62,
+      "source_wins": 290,
+      "recent_7_day_average": 84.54,
       "best_output": {
         "algorithm": "diversity_explorer",
         "algorithm_description": "Experimental wide sampler that explores varied looks.",
@@ -234,12 +234,12 @@
     },
     {
       "style": "monochrome_editorial",
-      "count": 87,
-      "average_score": 84.58,
+      "count": 89,
+      "average_score": 84.5,
       "best_score": 91.22,
       "daily_wins": 0,
       "source_wins": 0,
-      "recent_7_day_average": 88.83,
+      "recent_7_day_average": 84.67,
       "best_output": {
         "algorithm": "monochrome_editorial",
         "algorithm_description": "Black-and-white editorial grade for shape and contrast.",
@@ -345,12 +345,12 @@
     },
     {
       "style": "pastel_duotone",
-      "count": 209,
-      "average_score": 82.4,
+      "count": 212,
+      "average_score": 82.36,
       "best_score": 93.22,
       "daily_wins": 3,
       "source_wins": 34,
-      "recent_7_day_average": 82.46,
+      "recent_7_day_average": 82.47,
       "best_output": {
         "algorithm": "diversity_explorer",
         "algorithm_description": "Experimental wide sampler that explores varied looks.",
@@ -461,12 +461,12 @@
     },
     {
       "style": "adaptive_auto_enhance",
-      "count": 270,
-      "average_score": 82.36,
+      "count": 272,
+      "average_score": 82.35,
       "best_score": 91.59,
       "daily_wins": 0,
       "source_wins": 6,
-      "recent_7_day_average": 82.36,
+      "recent_7_day_average": 82.34,
       "best_output": {
         "algorithm": "adaptive_auto_enhance",
         "algorithm_description": "Source-aware exposure, contrast, and saturation correction.",
@@ -577,7 +577,7 @@
       "best_score": 97.3,
       "daily_wins": 59,
       "source_wins": 59,
-      "recent_7_day_average": 86.55,
+      "recent_7_day_average": 85.95,
       "best_output": {
         "best_for_source_today": true,
         "grain_seed_hex": "0x46e69dc895b97f5d",
@@ -802,7 +802,7 @@
       "best_score": 91.79,
       "daily_wins": 0,
       "source_wins": 0,
-      "recent_7_day_average": 84.75,
+      "recent_7_day_average": 82.62,
       "best_output": {
         "algorithm": "diversity_explorer",
         "algorithm_description": "Experimental wide sampler that explores varied looks.",
